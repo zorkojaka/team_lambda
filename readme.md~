@@ -24,7 +24,7 @@ Then, on a stationairy machine run:
 roslaunch turtlebot_rviz bringup_navigation.launch
 
 and for the goal node, launch:
-roslaunch exercise6 mapGoals.launch
+roslaunch exercise6 mapGoals.launch (you can run this one anywhere..)
 
 
 That's about it actually...

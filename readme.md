@@ -28,3 +28,5 @@ roslaunch exercise6 mapGoals.launch (you can run this one anywhere..)
 
 
 That's about it actually...
+
+The todoList.txt contains the TO-DOs for our project. Feel free to edit anything.
