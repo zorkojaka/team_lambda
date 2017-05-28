@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="exercise6" type="find_blu" name="find_blu" output="screen">
+
+        <remap from="input" to="/exercise6/voxelgrid"/>
+        <remap from="/exercise6/find_blu" to="filteredBlue"/>
+
+    </node>
+
+</launch>
