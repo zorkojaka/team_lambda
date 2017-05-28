@@ -14,8 +14,8 @@ THE TO-DOS:
 
 
 	SPEECH RECOGNITION:
-		phrasing meaningful stuff _NOT
-		saying stuff _NOT
+		phrasing meaningful stuff _IPG
+		saying stuff _CPL
 		hearing stuff _NOT
 		understanding heard stuff _NOT
 
