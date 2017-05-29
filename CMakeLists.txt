@@ -68,6 +68,7 @@ catkin_package(
 add_executable (find_red src/find_red.cpp)
 add_executable (find_grn src/find_grn.cpp)
 add_executable (find_blu src/find_blu.cpp)
+add_executable (refactColorSep src/seperateByColorAndDistance.cpp)
 add_executable (cloud_forwarder src/forwarder.cpp)
 add_executable (cloud_voxelgrid src/voxelgrid.cpp)
 add_executable (find_plane src/find_plane.cpp)
