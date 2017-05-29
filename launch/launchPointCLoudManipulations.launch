@@ -41,6 +41,10 @@
         <remap from="input" to="/exercise6/voxelgrid"/>
         <remap from="cylinder" to="/exercise6/find_cyl"/>
 
+    </node>	<node pkg="exercise6" type="seperate" name="seperate" output="screen">
+
+        <remap from="input" to="/exercise6/voxelgrid"/>
+
     </node>
 
 

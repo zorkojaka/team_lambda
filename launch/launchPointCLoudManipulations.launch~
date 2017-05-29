@@ -39,7 +39,7 @@
 	<node pkg="exercise6" type="find_cyl" name="find_cyl" output="screen">
 
         <remap from="input" to="/exercise6/voxelgrid"/>
-        <remap from="filteredRed" to="/exercise6/find_red"/>
+        <remap from="cylinder" to="/exercise6/find_cyl"/>
 
     </node>
 
