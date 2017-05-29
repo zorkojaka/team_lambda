@@ -29,6 +29,7 @@ int getCol(int r, int g, int b){
 	}else if(r*0.5>b && g*0.5>b){
 		//YELLOW OBJECT
 		lab=4;
+		
 	}else if(r<10 && g<10 && b<10){
 		//BLACK OBJECT
 		lab=0;
