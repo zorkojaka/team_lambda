@@ -1,7 +1,7 @@
 <launch>
 
   <!-- This is how to launch a launch file from inside another launch file -->
-  <include file="$(find exercise6)/launch/dummy.launch"></include>
+  <include file="$(find ring_detector)/launch/dummy.launch"></include>
 
   <param name="/turtlebot_node/odom_angular_scale_correction" value="1.0" />
 

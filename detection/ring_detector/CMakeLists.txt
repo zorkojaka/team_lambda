@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(exercise6)
+project(ring_detector)
 
 ## Find system dependencies
 find_package(Boost REQUIRED COMPONENTS system filesystem thread)
@@ -22,6 +22,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
+  roscpp
+  cv_bridge
+  nav_msgs
+  geometry_msgs
 )
 
 ## Add include directories
@@ -61,6 +65,8 @@ catkin_package(
     PCL
 )
 
+add_executable (find_red src/find_red.cpp)
+add_executable (find_grn src/find_grn.cpp)
 add_executable (find_blu src/find_blu.cpp)
 add_executable (cloud_forwarder src/forwarder.cpp)
 add_executable (cloud_voxelgrid src/voxelgrid.cpp)

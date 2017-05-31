@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(exercise6)
+project(map_goals)
 
 ## Find system dependencies
 find_package(Boost REQUIRED COMPONENTS system filesystem thread)
@@ -65,13 +65,6 @@ catkin_package(
     PCL
 )
 
-add_executable (find_red src/find_red.cpp)
-add_executable (find_grn src/find_grn.cpp)
-add_executable (find_blu src/find_blu.cpp)
-add_executable (cloud_forwarder src/forwarder.cpp)
-add_executable (cloud_voxelgrid src/voxelgrid.cpp)
-add_executable (find_plane src/find_plane.cpp)
-add_executable (find_cyl src/find_cyl.cpp)
 add_executable (mark_on_map src/mark_on_map.cpp)
 #add_executable (rand_goal src/rand_goal.cpp)
 add_executable (map_goalz src/map_goals.cpp)
