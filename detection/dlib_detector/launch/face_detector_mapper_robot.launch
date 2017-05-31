@@ -1,0 +1,29 @@
+<launch>
+  <include file="$(find dlib_detector)/launch/face_detector.launch">
+	<arg name="image_topic" value="/camera/rgb/image_color" />
+    <arg name="detections_topic" value="/facedetector/faces" />
+  </include>
+
+  <include file="$(find localizer)/launch/localizer_node_robot.launch" />
+
+  <node pkg="localizer" type="facemap.py" name="facemapper" output="screen">
+    <remap from="detections" to="/facedetector/faces" />
+    <remap from="camera_info" to="/camera/rgb/camera_info" />
+    <remap from="mapper" to="/facedetector/markers" />
+    <remap from="centers" to="/facedetector/centers" />
+  </node>
+
+  <node pkg="localizer" type="faceinteract.py" name="faceinteract" output="screen">
+    <remap from="centers" to="/facedetector/centers" />
+  </node>
+
+  <!-- 
+  <node pkg="detection_msgs" type="overlay_visualizer" name="face_visualizer" output="screen">
+    <remap from="camera" to="/camera/rgb/image_raw" />
+    <remap from="detections" to="/facedetector/faces" />
+    <param name="cleanup_delay" value="0" />
+  </node>
+  -->
+
+  <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
+</launch>
