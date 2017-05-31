@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="ring_detector" type="find_blu" name="find_blu" output="screen">
+
+        <remap from="input" to="/ring_detector/voxelgrid"/>
+        <remap from="filteredBlue" to="/ring_detector/find_blu"/>
+
+    </node>
+
+</launch>
