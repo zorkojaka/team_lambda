@@ -91,7 +91,7 @@ void callback(const pcl::PCLPointCloud2ConstPtr& cloud_blob) {
 		return;//so far away from me
 	}
 
-	printf("CYLINDER %s Center: %f, %f, %f\n", namespaces[thisNode],coefficients->values[0],coefficients->values[1],coefficients->values[2]);
+	printf("%s CYLINDER Center: %f, %f, %f\n", namespaces[thisNode],coefficients->values[0],coefficients->values[1],coefficients->values[2]);
 
 
 	
