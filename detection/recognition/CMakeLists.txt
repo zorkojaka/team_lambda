@@ -46,4 +46,5 @@ catkin_package(
 )
 
 add_executable (descriptorMaker src/descriptorMaker.cpp)
+add_executable (distanceCalculator src/distanceCalculator.cpp)
 
