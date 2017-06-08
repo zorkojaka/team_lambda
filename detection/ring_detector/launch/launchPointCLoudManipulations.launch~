@@ -20,14 +20,14 @@
 		<remap from="input" to="pclB"/>
 		<remap from="marker" to="/exercise6/circs"/>
 	</node>
-	<node pkg="ring_detector" type="find_circ" name="find_circG"  args="green" output="screen">
+	<!--node pkg="ring_detector" type="find_circ" name="find_circG"  args="green" output="screen">
 		<remap from="input" to="pclG"/>
 		<remap from="marker" to="/exercise6/circs"/>
 	</node>
 	<node pkg="ring_detector" type="find_circ" name="find_circR" args="red"  output="screen">
 		<remap from="input" to="pclR"/>
 		<remap from="marker" to="/exercise6/circs"/>
-	</node>     
+	</node-->     
 	<node pkg="ring_detector" type="find_cyl" name="find_cylR" args="red"  output="screen">
 	        <remap from="input" to="pclR"/>
 	        <remap from="cylinder" to="/exercise6/find_cyl"/>

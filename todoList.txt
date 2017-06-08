@@ -27,8 +27,7 @@ THE TO-DOS:
 		detecting RINGS _WRK
 		detecting CYLINDERS _WRK
 		detecting FACES _CPL
-		recognising faces _IPG
-
+		recognising faces _WRK
 	TASK LOGIC
 		how to generate a truth table of data _NOT
 		How to combine all the other tasks in to a logical whole.
