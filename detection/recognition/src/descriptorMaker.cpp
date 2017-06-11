@@ -8,9 +8,10 @@
 #include <detection_msgs/Detection.h>
 
 
-int siz=50;
-int sts=5;
-int descLen=3*sts*sts;
+int sts=3;
+int siz=sts*10;
+int descLen=sts*sts;
+bool penis = true;
 double** createSmaller(int **orgF, int orgX, int orgY){
 	double **smlF=new double* [siz];
 	int **ctr = new int* [siz];
@@ -32,6 +33,8 @@ double** createSmaller(int **orgF, int orgX, int orgY){
 		for(int j=0;j<siz;j++){
 			//printf("%f ",smlF[i][j]);fflush(stdout);
 			smlF[i][j]/=(ctr[i][j]+1);
+			if(smlF[i][j]>200.0)smlF[i][j]=0.0;
+			if(smlF[i][j]<50.0)smlF[i][j]=0.0;
 		}
 		//printf("\n");fflush(stdout);
 	}
@@ -97,19 +100,27 @@ std_msgs::Float64MultiArray getDescriptorVector(double **smlF){
 			double avg=0;
 			double dx=0;
 			double dy=0;
+			double overMax=0;
+			double underMin=0;
 			for(int k=i*stp+1;k<(i+1)*stp;k++){
 				for(int l=j*stp+1;l<(j+1)*stp;l++){
 					avg+=smlF[k][l];
 					dx+=smlF[k][l]-smlF[k-1][l];
 					dy+=smlF[k][l]-smlF[k][l-1];
+					if(smlF[k][l]>0.8)overMax+=1;
+					if(smlF[k][l]<0.2)underMin+=1;
 				}
 			}
 			avg/=((stp-1)*(stp-1));
 			dx/=((stp-1)*(stp-1));
 			dy/=((stp-1)*(stp-1));
+			overMax/=((stp-1)*(stp-1));
+			underMin/=((stp-1)*(stp-1));
 			array.data.push_back(avg);
 			array.data.push_back(dx);
 			array.data.push_back(dy);
+			array.data.push_back(overMax);
+			array.data.push_back(underMin);
 			
 		}
 	}
@@ -144,7 +155,10 @@ void printDesc(std_msgs::Float64MultiArray d){
 ros::Publisher pub;
 void callback(const detection_msgs::DetectionConstPtr  det) {
 	sensor_msgs::Image image=det->image;
-
+	if(penis == true){
+	
+		penis = false;
+	}
          
 	int sizeX=det->width;
 	int sizeY=det->height;
@@ -198,15 +212,15 @@ void callback(const detection_msgs::DetectionConstPtr  det) {
 	std_msgs::Float64MultiArray descBR=getDescriptorVector(diffBR);
 	
 	std_msgs::Float64MultiArray desc;
-	for(int i=0;i<descLen;i++){
+	for(int i=0;i<descR.data.size();i++){
 		desc.data.push_back(descR.data[i]);
 		desc.data.push_back(descG.data[i]);
 		desc.data.push_back(descB.data[i]);
-		desc.data.push_back(descRG.data[i]);
-		desc.data.push_back(descGB.data[i]);
-		desc.data.push_back(descBR.data[i]);
+		//desc.data.push_back(descRG.data[i]);
+		//desc.data.push_back(descGB.data[i]);
+		//desc.data.push_back(descBR.data[i]);
 	}
-	double *histF=getHist(diffRG,diffGB,diffBR);
+	double *histF=getHist(smlR,smlG,smlB);
 	for(int i=0;i<3*siz;i++)
 		desc.data.push_back(histF[i]);
 		
@@ -230,7 +244,7 @@ int main (int argc, char** argv) {
 	pub = nh.advertise<std_msgs::Float64MultiArray> ("faceDesc", 1);
 
 
-	ros::Rate r(5);
+	ros::Rate r(1);
 	// Spin
 	ros::spin ();
 
