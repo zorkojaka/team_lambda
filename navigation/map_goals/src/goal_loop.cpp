@@ -10,6 +10,8 @@
 #include <visualization_msgs/Marker.h>
 #include <time.h>
 
+#include <cstring>
+
 using namespace std;
 
 ros::Publisher goal_pub;
@@ -25,63 +27,267 @@ visualization_msgs::Marker redMarker;
 bool redFound=false;
 
 
-Mat cv_map;
+//Mat cv_map;
 int size_x;
 int size_y;
 
+int poznamoring;
+int poznamocilinder;
+int zaporednimoski=1;
+int inforingspol=0;
+int infocilinderspol=0;
 
-void mapCallback(const nav_msgs::OccupancyGridConstPtr& msg_map) {
-    int size_x = msg_map->info.width;
-    int size_y = msg_map->info.height;
 
-    map_resolution = msg_map->info.resolution;
-	tf::poseMsgToTF(msg_map->info.origin, map_transform);
+struct person{
+int id;
+int spol;
+int starost;
+int visina;
+
+int inforing; //1 ima -1 nima 0 nedefiniran
+int infocilinder;
+int truth;  //1 resnica -1 laž 0 nedefiniran
+int prisotnost; // 0 nedefiniran 1 prisoten -1 neprisoten
+
+person *next;
+
+};
+
+//heads of 2lists for woman and man
+person *manhead;
+person *womanhead;
+
+
+
+void addperson(int id, int spol, int starost, int visina){	
+	person *kaz;
+	person *nov;
+	
+	if(spol==1){//moski
+		kaz=manhead;//zacetk moskega lista
+		while(kaz->next != NULL){	
+			kaz=kaz->next;
+		}
+		//dobimo da kaz kaže na zadnje el.
+		
+		kaz->next=new person;
+		kaz=kaz->next;
+
+		//VNOS PODATKOV
+		kaz->id=id;	
+		kaz->spol=1;
+		kaz->starost=starost;
+		kaz->visina=visina;
+		kaz->inforing=0;
+		kaz->infocilinder=0;
+		kaz->truth=1;
+		kaz->prisotnost=0;
+		kaz->next=NULL;
+	
+			
+	}else{//zenska
+		printf("notr\n");
+		kaz=womanhead;
+		while(kaz->next != NULL){
+			kaz=kaz->next;
+		}
+		//dobimo da kaz kaže na zadnje el.
+		
+		kaz->next=new person;
+		kaz=kaz->next;
+		
+		//VNOS PODATKOV
+		kaz->id=id;	
+		kaz->spol=2;
+		kaz->starost=starost;
+		kaz->visina=visina;
+		kaz->inforing=0;
+		kaz->infocilinder=0;
+		kaz->truth=0;
+		kaz->prisotnost=0;
+		kaz->next=NULL;
+	}
+	
+}
+
+void printlist(person *head){
+person *kaz=head;
+while(kaz->next != NULL){
+	kaz=kaz->next;
+	printf("Oseba:%d, spol: %d, starost: %d, visina;%d, inforing: %d, infocilinder: %d, truth: %d, prisotnost: %d\n",kaz->id,kaz->spol,kaz->starost, kaz->visina, kaz->inforing, kaz->infocilinder, kaz->truth, kaz->prisotnost);
+	fflush(stdout);
+	
+}
+
+}
+
+//incializacija vseh oseb v lista man in woman
+void spoznavanjeoseb(){
+
+	//incializacija glav listov
+	manhead = new person;
+	manhead->id=0;
+	manhead->spol=1;
+	manhead->next=NULL;
+		
+	womanhead = new person;
+	womanhead->id=0;
+	womanhead->spol=2;
+	womanhead->next=NULL;
+	
+	//DODAMO VSE OSEBE (id,spol(1=man,2=woman),starost,visina,inforing,infocilinder,truth; (1=true,-1=false,0=undefined))
+	
+	//MAN DODAMO JIH NA LIST manhead->Harry
+	//1. Harry	
+	addperson(1,1,18,165);
+	//2. Peter
+	addperson(2,1,25,182);
+	//3. Elvis
+	addperson(3,1,34,181);
+	//4. Forrest	
+	addperson(4,1,42,183);
+	//5. Tesla	
+	addperson(5,1,45,188);
+	//6. Albert	
+	addperson(6,1,71,180);
+	
+
+// WOMAN  DODAMO JIH NA NOV LIST womanhead->Ilka...
+	//7. Ilka	
+	addperson(7,2,26,172);
+	//8. Adele	
+	addperson(8,2,29,175);
+	//9. Scarlet	
+	addperson(9,2,31,160);
+	//10. Lindsay	
+	addperson(10,2,32,178);
+	//11. Tina
+	addperson(11,2,33,171);
+	//12. Ellen	
+	addperson(12,2,59,170);
+}
+
+
+void pogovor(struct person per){
+	
+	struct person *kaz;	
+	int odg=0;
+
+	if(per.spol==2){
+		//pogovor ženske
+		//System("rosrun sound_play say.py 'Hi. Are you a woman'");
+		kaz=womanhead;
+		if(odg==1){
+			//POMENI DA GOVORI RESNICO
+			while(kaz->id != per.id){
+				kaz=kaz->next;
+			}
+			kaz->truth=1;
+			kaz->prisotnost=1;
+		}else{//LAŽE
+			while(kaz->id != per.id){
+				kaz=kaz->next;
+			}
+			kaz->truth=-1;
+			kaz->prisotnost=1;
+		}
+		
+	}else if(per.spol==1){
+		//POGOVOR Z MOŠKIM
+
+		kaz=manhead->next;
+		while(kaz->id!=per.id){
+			kaz=kaz->next;
+		}
+		kaz->prisotnost=1;
+
+
+		if(zaporednimoski==1){
+			zaporednimoski++;
+			//pogovor s prvim moškega
+			//System("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
+			
+			//odg="yes";//yes
+			if(odg==1){
+				//woman cant have info about magic rings
+				kaz=womanhead->next;
+				inforingspol=1;
+				while(kaz!=NULL){
+					kaz->inforing=-1;
+					kaz=kaz->next;
+				}
+			}else{
+				//man cant have info about magic rings
+				kaz=manhead->next;
+				inforingspol=2;
+				while(kaz!=NULL){
+					kaz->inforing=-1;
+					kaz=kaz->next;
+				}
+			}
+			
+			//DRUGO UPRAŠANJE
+			//System("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
+			
+			if(odg==1){
+				//woman cant have info about location
+				kaz=womanhead->next;
+				infocilinderspol=1;
+				while(kaz!=NULL){
+					kaz->infocilinder=-1;
+					kaz=kaz->next;
+				}
+			}else{
+				//man cant have info about magic rings
+				kaz=manhead->next;
+				infocilinderspol=2;
+				while(kaz!=NULL){
+					kaz->infocilinder=-1;
+					kaz=kaz->next;
+				}
+			}
+		}
+		//naprej je za drugega in tretjega moškega
+		else if(zaporednimoski==2){
+			zaporednimoski++;
+			//drugi moski ugotovimo kdo ve za ring
+			if(inforingspol==1){
+				kaz=manhead;
+			}else{
+				kaz=womanhead;
+			}
+			//kaz po zanki kaže na ung
+			while(kaz->inforing!=0){
+				kaz=kaz->next;
+			}
+
+			//1.VPRAŠANJE
+			//System("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
+			if(odg==1){
+				kaz->inforing=1; 
+			}else{
+				kaz->inforing=-1;		
+			}
+			while(kaz->inforing!=0){
+				kaz=kaz->next;
+			}
+			
+			//2. VPRAŠANJE			
+			//System("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
+			
+		}else if(zaporednimoski>2){
+			zaporednimoski++; 
+			//tretji moski ugotovimo kdo ve za cilinder
+			
+			
+		}
+	}
 	
 	
-	const std::vector<int8_t>& map_msg_data (msg_map->data);
-
-    unsigned char *cv_map_data = (unsigned char*) cv_map.data;
-
-    //We have to flip around the y axis, y for image starts at the top and y for map at the bottom
-    int size_y_rev = size_y-1;
-
-    for (int y = size_y_rev; y >= 0; --y) {
-
-        int idx_map_y = size_x * (size_y -y);
-        int idx_img_y = size_x * y;
-
-        for (int x = 0; x < size_x; ++x) {
-
-            int idx = idx_img_y + x;
-
-            switch (map_msg_data[idx_map_y + x])
-            {
-            case -1:
-                cv_map_data[idx] = 127;
-                break;
-
-            case 0:
-                cv_map_data[idx] = 255;
-                break;
-
-            case 100:
-                cv_map_data[idx] = 0;
-                break;
-            }
-        }
-    }
-}
-
-int getMapAt(int x, int y){
-	return cv_map_data[size_x*y+x];
 }
 
 
-void redCallback(const visualization_msgs::Marker marker){
-	if(redFound==true) return;
-	redMarker=marker;
-	redFound=true;
-}
+
 
 
 
@@ -91,30 +297,36 @@ int main(int argc, char** argv) {
 	ros::init(argc, argv, "goal_loop");
     ros::NodeHandle n;
 	
-	actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ac("move_base", true);
-	 
-	 
-		 
-	tf::TransformListener map2BaseLinkListner;
-	tf::StampedTransform map2BaseLink;
-	
-	map2BaseLinkListner.waitForTransform("/map", "/base_link", ros::Time(0), ros::Duration(10.0));
-	map2BaseLinkListner.lookupTransform("/map", "/base_link", ros::Time(0), map2BaseLink);
-	
-	marker_pub = n.advertise<visualization_msgs::Marker> ("points", 1);
-	
-	
-	
-	
-	//wait for the action server to come up
-	while(!ac.waitForServer(ros::Duration(5.0))){
-		ROS_INFO("Waiting for the move_base action server to come up");
-	}
-    map_sub = n.subscribe("map", 10, &mapCallback);
-    //faceDetect_sub = n.subscribe("detectionFace", 10, &faceDetector);
-	goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);
+	struct person *kaz;
+
+	//manhead->Harry->Peter->Elvis->Forrest->Tesla->Albert
+	//womanhead->Ilka->Adele->Scarlet->Lindsay->Tina->Ellen	
+	spoznavanjeoseb();
+
 
 	
+	printlist(manhead);
+	printlist(womanhead);
+	
+
+	kaz=manhead->next;
+	pogovor(*kaz);
+	pogovor(*manhead->next->next);
+	pogovor(*manhead->next->next->next);
+
+	pogovor(*womanhead->next);
+	pogovor(*womanhead->next->next);
+	pogovor(*womanhead->next->next->next);	
+
+
+	printlist(manhead);
+	printlist(womanhead);
+	//printf("zacetek2\n");
+	//incializacija oseb
+	//spoznavanjeoseb();
+	
+	
+	/*
     while(ros::ok()) {
 	int x=0,y=100;
 	int faceCounter=0;
@@ -153,11 +365,13 @@ int main(int argc, char** argv) {
 			
 			marker_pub.publish(redMarker);
 		}
+		}
+		*/
 
 
 		ros::spinOnce();
 
-	}
+	
 	
     return 0;
 
