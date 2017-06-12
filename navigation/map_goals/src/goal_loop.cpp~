@@ -417,7 +417,6 @@ void pogovor(struct person per){
 				}
 				
 			if(kaz!=NULL){
-			//TREBA SESTAVT STRING UKAZ + IME +...
 				system("rosrun sound_play say.py 'does USE NAME know which location is right ?'");
 				if(odg==1){
 					kaz->infocilinder=1; 

@@ -24,10 +24,15 @@ ros::Subscriber blu_sub;
 float map_resolution = 0;
 tf::Transform map_transform;
 visualization_msgs::Marker redMarker;
+bool redFound=false;
 
 
-int poznamoring=0;
-int poznamocilinder=0;
+//Mat cv_map;
+int size_x;
+int size_y;
+
+int poznamoring;
+int poznamocilinder;
 int zaporednimoski=1;
 int inforingspol=0;
 int infocilinderspol=0;
@@ -81,6 +86,7 @@ void addperson(int id, int spol, int starost, int visina){
 	
 			
 	}else{//zenska
+		printf("notr\n");
 		kaz=womanhead;
 		while(kaz->next != NULL){
 			kaz=kaz->next;
@@ -106,90 +112,14 @@ void addperson(int id, int spol, int starost, int visina){
 
 void printlist(person *head){
 person *kaz=head;
-	while(kaz->next != NULL){
-		kaz=kaz->next;
-		printf("Oseba:%d, spol: %d, starost: %d, visina;%d, inforing: %d, infocilinder: %d, truth: %d, prisotnost: %d\n",kaz->id,kaz->spol,kaz->starost, kaz->visina, kaz->inforing, kaz->infocilinder, kaz->truth, kaz->prisotnost);
-		fflush(stdout);
+while(kaz->next != NULL){
+	kaz=kaz->next;
+	printf("Oseba:%d, spol: %d, starost: %d, visina;%d, inforing: %d, infocilinder: %d, truth: %d, prisotnost: %d\n",kaz->id,kaz->spol,kaz->starost, kaz->visina, kaz->inforing, kaz->infocilinder, kaz->truth, kaz->prisotnost);
+	fflush(stdout);
 	
-	}
 }
 
-// preveri če že vemo kdo ve kje je ring vrne ID, če ne vemo vrne 0
-int inforingcheck(person *head){
-person *kaz=head->next;
-int enka=0;
-int stnicel=0;
-int niclaid=0;
-	while(kaz != NULL){
-		
-		//gledamo če kdo ve
-		if(kaz->inforing==1){
-			enka=kaz->id;
-			poznamoring=enka;
-			return enka;
-		}
-		//gledamo kok mamo še neznanih
-		if(kaz->prisotnost > -1 && kaz->inforing==0){
-			stnicel++;
-			niclaid=kaz->id;
-		}
-		kaz=kaz->next;
-	}
-	if(stnicel==1){
-		kaz=head->next;
-		while(kaz->id != niclaid && kaz!=NULL){
-			kaz=kaz->next;
-		}
-		
-		kaz->inforing=1;
-		poznamoring=niclaid;
-		
-		return niclaid;
-	}
-	return 0;
 }
-
-// preveri če že vemo kdo ve kje je cilinder
-int infocilindercheck(person *head){
-person *kaz=head->next;
-int enka=0;
-int stnicel=0;
-int niclaid=0;
-
-//gremo čez vse
-	while(kaz != NULL){		
-		//gledamo če kdo ve
-		if(kaz->inforing==1){
-			enka=kaz->id;
-			poznamocilinder=enka;
-			return enka;
-		}
-		//gledamo kok mamo še neznanih
-		if(kaz->prisotnost > -1 && kaz->infocilinder==0){
-			stnicel++;
-			niclaid=kaz->id;
-		}
-		//premaknemo naprej
-		kaz=kaz->next;
-	}
-	
-	//če je samo še en prisoten in nezana pol on ve
-	if(stnicel==1){
-		kaz=head->next;
-		//pokazemo nanga
-		while(kaz->id != niclaid && kaz!=NULL){
-			kaz=kaz->next;
-		}
-		
-		kaz->infocilinder=1;
-		poznamocilinder=niclaid;
-		
-		return niclaid;
-	}
-	//še ne vemo
-	return 0;
-}
-
 
 //incializacija vseh oseb v lista man in woman
 void spoznavanjeoseb(){
@@ -238,13 +168,14 @@ void spoznavanjeoseb(){
 }
 
 
-void pogovor(struct person per){	
-	struct person *kaz;	
-	int odg=1;
+void pogovor(struct person per){
 	
-	//pogovor ženske
+	struct person *kaz;	
+	int odg=0;
+
 	if(per.spol==2){
-		system("rosrun sound_play say.py 'Hi. Are you a woman'");
+		//pogovor ženske
+		//System("rosrun sound_play say.py 'Hi. Are you a woman'");
 		kaz=womanhead;
 		if(odg==1){
 			//POMENI DA GOVORI RESNICO
@@ -260,20 +191,22 @@ void pogovor(struct person per){
 			kaz->truth=-1;
 			kaz->prisotnost=1;
 		}
-	//KONEC POGOVORA Z ŽENSKO	
+		
 	}else if(per.spol==1){
 		//POGOVOR Z MOŠKIM
+
 		kaz=manhead->next;
-		//kažemo na pravega
 		while(kaz->id!=per.id){
 			kaz=kaz->next;
 		}
 		kaz->prisotnost=1;
 
-		//pogovor s prvim moškim
+
 		if(zaporednimoski==1){
 			zaporednimoski++;
-			system("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
+			//pogovor s prvim moškega
+			//System("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
+			
 			//odg="yes";//yes
 			if(odg==1){
 				//woman cant have info about magic rings
@@ -292,8 +225,10 @@ void pogovor(struct person per){
 					kaz=kaz->next;
 				}
 			}
-			//2. VPRAŠANJE
-			system("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
+			
+			//DRUGO UPRAŠANJE
+			//System("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
+			
 			if(odg==1){
 				//woman cant have info about location
 				kaz=womanhead->next;
@@ -321,126 +256,28 @@ void pogovor(struct person per){
 			}else{
 				kaz=womanhead;
 			}
-			//kaz po zanki kaže na un spol ki to ve.
-			while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
+			//kaz po zanki kaže na ung
+			while(kaz->inforing!=0){
 				kaz=kaz->next;
-			}//damo na prvega, za kerga ne vemo a ve al ne.
+			}
 
 			//1.VPRAŠANJE
-			system("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
+			//System("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
 			if(odg==1){
 				kaz->inforing=1; 
 			}else{
 				kaz->inforing=-1;		
 			}
-			
-			
-			//2. VPRAŠANJE
-			while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
+			while(kaz->inforing!=0){
 				kaz=kaz->next;
 			}
-			system("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
 			
-			if(odg==1){
-				kaz->inforing=1; 
-			}else{
-				kaz->inforing=-1;		
-			}
-			
-						
-			
+			//2. VPRAŠANJE			
+			//System("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
 			
 		}else if(zaporednimoski>2){
 			zaporednimoski++; 
-			//nastavmo kazalec na pravi spol
-			
-			if(poznamoring==0){ //če še ne poznamo kdo ve kje je ring
-				if(inforingspol==1){
-					kaz=manhead;
-				}else{
-					kaz=womanhead;
-				}
-				
-				while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
-				kaz=kaz->next;
-				}
-				if(kaz!=NULL){
-					//1.VPRAŠANJE
-					system("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
-					if(odg==1){
-						kaz->inforing=1; 
-					}else{
-						kaz->inforing=-1;		
-					}
-				}
-				
-					//2.VPRAŠANJE
-				while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
-				kaz=kaz->next;
-				}
-				if(kaz!=NULL){
-					system("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
-					if(odg==1){
-						kaz->inforing=1; 
-					}else{
-						kaz->inforing=-1;		
-					}
-				}	
-				
-				
-			//ČE SMO RING ŽE POGRUNTAL
-			}else if(poznamocilinder==0){
-			//nastavmo kazalec na pravi spol
-			if(infocilinderspol==1){
-					kaz=manhead;
-				}else{
-					kaz=womanhead;
-				}
-			}
-			
-			//1. VPRAŠANJE
-			while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
-				kaz=kaz->next;
-				}
-				
-			if(kaz!=NULL){
-				system("rosrun sound_play say.py 'does USE NAME know which location is right ?'");
-				if(odg==1){
-					kaz->infocilinder=1; 
-				}else{
-					kaz->infocilinder=-1;		
-				}
-			}
-			//2.vprašanje
-			while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
-				kaz=kaz->next;
-				}
-				
-			if(kaz!=NULL){
-			//TREBA SESTAVT STRING UKAZ + IME +...
-				system("rosrun sound_play say.py 'does USE NAME know which location is right ?'");
-				if(odg==1){
-					kaz->infocilinder=1; 
-				}else{
-					kaz->infocilinder=-1;		
-				}
-			}else{
-				person *ringhead;
-				person *cilinderhead;
-				if(inforingspol==1){
-					ringhead=manhead;
-				}else{
-					ringhead=womanhead;
-				}
-				
-				if(infocilinderspol==1){
-					cilinderhead=manhead;
-				}else{
-					cilinderhead=womanhead;
-				}
-				printf("VEMO KDO VE KEJ, Ring:%d, Cilinder:%d\n",inforingcheck(ringhead),infocilindercheck(cilinderhead));
-			}
-				
+			//tretji moski ugotovimo kdo ve za cilinder
 			
 			
 		}
@@ -481,12 +318,9 @@ int main(int argc, char** argv) {
 	pogovor(*womanhead->next->next);
 	pogovor(*womanhead->next->next->next);	
 
-	int ringID = inforingcheck(manhead);
-	int cilinderID = inforingcheck(womanhead);
+
 	printlist(manhead);
 	printlist(womanhead);
-	
-	printf("Ringid:%d, CilinderID:%d\n",ringID,cilinderID);
 	//printf("zacetek2\n");
 	//incializacija oseb
 	//spoznavanjeoseb();
@@ -509,8 +343,11 @@ int main(int argc, char** argv) {
 		goal.target_pose.pose.position.x = transformed.x();
 		goal.target_pose.pose.position.y = transformed.y();
 		goal.target_pose.header.stamp = ros::Time::now();
+
+
   		ROS_INFO("Sending goal location ...");
    		ac.sendGoal(goal);
+
 		ac.waitForResult();
 		if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
 			ROS_INFO("Hooray, the base moved!!!");
@@ -521,8 +358,10 @@ int main(int argc, char** argv) {
 			
 			
 			
+
 			tf::Stamped<tf::Pose> transformed_red_marker;
 			map2BaseLinkListner.transformPose("map", redMarker.pose, transformed_red_marker);
+
 			
 			marker_pub.publish(redMarker);
 		}
