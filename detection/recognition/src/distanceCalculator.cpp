@@ -5,14 +5,45 @@
 #include "std_msgs/Float64MultiArray.h"
 #include <math.h> 
 
-std::vector<std_msgs::Float64MultiArray> faces (0);
-bool knownFace(std_msgs::Float64MultiArray newF){
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+std::vector<std_msgs::Float64MultiArray> faces[12];
+std::vector<string> names; 
+string descriptorLocation = "/home/team_lambda/ROS/src/team_lambda/detection/recognition/learnedFaces/";
+void writeObject(int n);
+bool readFaces(int n);
+
+double faceSimilarity(std::vector<std_msgs::Float64MultiArray> face, std_msgs::Float64MultiArray newF){
+	int minIdx=-1;
+	int len = newF.data.size();
+	double minDist = 300000;
+	for(int j=0; j<face.size();j++){
+		double dist =0;
+		std_msgs::Float64MultiArray learnedFace =face.at(j);
+		for(int i=0; i<len;i++)
+			dist+=(learnedFace.data[i]-newF.data[i])*(learnedFace.data[i]-newF.data[i]);
+		dist=sqrt(dist);
+		if(dist<minDist){
+			minIdx=j;
+			minDist=dist;
+		}
+	}
+	if(minIdx == -1)
+		return -1;
+	return minDist;
+}
+
+void knownFace(std_msgs::Float64MultiArray newF){
 	int len = newF.data.size();
 	double minDist = 300000;
 	int minIdx=-1;
-	for(int j=0; j<faces.size();j++){
+	printf("\n\nStarting matching for this face!..!\n");
+	for(int j=0; j<faces[0].size();j++){
 		double dist =0;
-		std_msgs::Float64MultiArray learnedFace =faces.at(j);
+		std_msgs::Float64MultiArray learnedFace =faces[0].at(j);
 		for(int i=0; i<len;i++)
 			dist+=(learnedFace.data[i]-newF.data[i])*(learnedFace.data[i]-newF.data[i]);
 		dist=sqrt(dist);
@@ -21,26 +52,47 @@ bool knownFace(std_msgs::Float64MultiArray newF){
 			minIdx=j;
 			minDist=dist;
 		}
-		if(dist<0.6){
-			printf("I already know this face!\n\n");
-			return true;
-		}
 	}
-	printf("Min distance is between i=%d and this:%f\n",minIdx,minDist);
-	if(minDist>1.6){
+	printf("Min distance is between i=%d\n",minIdx);
+	if(minDist>1){
 		printf("Adding new face!\n");
-		faces.push_back(newF);
+		faces[0].push_back(newF);
+		//writeObject(0);
 	}
-	return false;
+	else if(minDist<0.5){
+		printf("This face I know already!\n");
+	}
+	else{
+		printf("Can't decide if I know that guy or.. Fuck it!\n");
+	}
 }
 void callback(const std_msgs::Float64MultiArray::ConstPtr&  descPtr) {
 	std_msgs::Float64MultiArray desc = *descPtr;
-	knownFace(desc);
+	//knownFace(desc);
+	
+	printf("Starting face estimation!\n");
+	int minIdx;
+	double minVal= 30000;
+	for(int i=0;i<12;i++){
+		double minDistTo_i = faceSimilarity(faces[i], desc);
+		if(minDistTo_i <= 0)
+			printf("this face %d has not yet been memorized\n", i);
+		else{
+			printf("Dist to %d-th face is:%f\n",i , minDistTo_i);
+			if(minDistTo_i < minVal){
+				minIdx=i;
+				minVal = minDistTo_i;
+			}
+		}
+	}
+	
+	printf("Concluded that this face is %s\n", names.at(minIdx).c_str());
 }
 int main (int argc, char** argv) {
-
+	for(int i=0;i<12;i++)
+		readFaces(i);
 	// Initialize ROS
-
+	
 	ros::init (argc, argv, "distanceCalculator");
 	ros::NodeHandle nh;
 
@@ -51,4 +103,47 @@ int main (int argc, char** argv) {
 	ros::spin ();
 
 
+}
+
+
+void writeObject(int n){
+	stringstream stream;
+	stream<<descriptorLocation<<n;
+	string file = stream.str();
+	std::ofstream myHuman;
+	myHuman.open(file.c_str());
+  	for(int j=0; j<faces[n].size();j++){
+  		for(int i=0; i<faces[n].at(j).data.size();i++)
+  			myHuman << faces[n].at(j).data[i]<< " ";
+  		myHuman<<"\n";
+  	}
+  	
+  	myHuman.close();
+}
+bool readFaces(int n){
+	stringstream stream;
+	stream<<descriptorLocation<<n;
+	string file = stream.str();
+	std::ifstream myHuman;
+	myHuman.open(file.c_str());
+
+	if (!myHuman.is_open()){
+		printf("Face descriptors for %d non existant in library!\n", n);
+		names.push_back("noName");
+		return false;
 	}
+	string name;
+	getline(myHuman, name);
+	names.push_back(name);
+	printf("Reading all face descriptors for %d! Name:%s\n", n, name.c_str());
+	for(string line; getline(myHuman, line); ){
+		istringstream in(line);
+		std_msgs::Float64MultiArray newSavedDesc;
+		double val;
+		while(in>>val)
+			newSavedDesc.data.push_back(val);
+		faces[n].push_back(newSavedDesc);
+	}
+	myHuman.close();
+	return true;
+}

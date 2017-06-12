@@ -29,7 +29,7 @@ THE TO-DOS:
 		detecting FACES _CPL
 		recognising faces _WRK
 	TASK LOGIC
-		how to generate a truth table of data _NOT
-		How to combine all the other tasks in to a logical whole.
+		how to generate a truth table of data _CPL
+		How to combine all the other tasks in to a logical whole.  _IPG
 	
 	

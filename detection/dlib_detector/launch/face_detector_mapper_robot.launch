@@ -17,7 +17,7 @@
   </node>
 
   
-  <node pkg="detection_msgs" type="overlay_visualizer" name="face_visualizer" output="screen">
+  <node pkg="detection_msgs" type="patch_visualizer" name="face_visualizer" output="screen">
     <remap from="camera" to="/camera/rgb/image_raw" />
     <remap from="detections" to="/facedetector/faces" />
     <param name="cleanup_delay" value="0" />

@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>   
 	<node pkg="recognition" type="descriptorMaker" name="descriptorMaker" output="screen">
-		<remap from="faceImg" to="/dlib_detector/detections"/>
+		<!--remap from="faceImg" to="/dlib_detector/detections"/-->
+		<remap from="faceImg" to="/facedetector/faces"/>
 		<remap from="faceDesc" to="/descriptor/face"/>
 	</node>
 

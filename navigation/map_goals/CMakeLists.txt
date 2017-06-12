@@ -68,5 +68,5 @@ catkin_package(
 add_executable (mark_on_map src/mark_on_map.cpp)
 #add_executable (rand_goal src/rand_goal.cpp)
 add_executable (map_goalz src/map_goals.cpp)
-#add_executable (goal_loop src/goal_loop.cpp)
+add_executable (goal_loop src/goal_loop.cpp)
 
