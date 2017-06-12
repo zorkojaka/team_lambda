@@ -122,7 +122,6 @@ struct TargetPosition{
 
 
 
-
 visualization_msgs::Marker createPointCloud(int id, float r, float g, float b)
 {
     visualization_msgs::Marker point_cloud;

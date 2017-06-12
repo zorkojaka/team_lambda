@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  tf
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -29,12 +30,12 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-add_executable(navigation_server src/ring_pickup.cpp)
+add_executable(maze_navigator src/ring_pickup.cpp)
 
-#target_link_libraries(
-#  navigation_server
-#  ${catkin_LIBRARIES}
-#)
+target_link_libraries(
+  maze_navigator
+  ${catkin_LIBRARIES}
+)
 
 #add_dependencies(
 #  navigation_server

@@ -1,4 +1,5 @@
-#include <ros/ros.h>
+
+#include "ros/ros.h"
 
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
@@ -16,14 +17,15 @@
 // Action goals
 #include <move_base_msgs/MoveBaseAction.h>
 #include <actionlib/client/simple_action_client.h>
+
+#include <maze_navigator/geom_util.h>
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
-#define mp make_pair
-#define pb push_back
-
 using namespace std;
-using namespace cv;
 
+const double OFFSET_X = 0.0;
+const double OFFSET_Y = 0.0;
+const double OFFSET_Z = 0.0;
 /*
     Small correction relative to robot.
 */
@@ -34,8 +36,7 @@ void constructGoal(MoveBaseClient &ac, tf::Vector3 &trans, double angle_2d)
     goal.target_pose.header.frame_id = "/base_link";
     goal.target_pose.header.stamp = ros::Time::now();
 
-    ROS_INFO("Moving ROBOT -> (%f %f) to (%f %f)\n", r_pos.wy_, r_pos.wx_, r_goal.wy_, r_goal.wx_);
-
+   
     // translation
     goal.target_pose.pose.position.x = trans.x();
     goal.target_pose.pose.position.y = trans.y();
@@ -43,10 +44,10 @@ void constructGoal(MoveBaseClient &ac, tf::Vector3 &trans, double angle_2d)
 
     // rotation
     tf::Quaternion rot_quat = constructRotation(angle_2d);
-    goal.target_pose.pose.orientation.x = rot_quat_.x();
-    goal.target_pose.pose.orientation.y = rot_quat_.y();
-    goal.target_pose.pose.orientation.z = rot_quat_.z();
-    goal.target_pose.pose.orientation.w = rot_quat_.w();
+    goal.target_pose.pose.orientation.x = rot_quat.x();
+    goal.target_pose.pose.orientation.y = rot_quat.y();
+    goal.target_pose.pose.orientation.z = rot_quat.z();
+    goal.target_pose.pose.orientation.w = rot_quat.w();
 
     ROS_INFO("Sending goal (%f, %f, %f) [%f, %f, %f, %f]\n",
              goal.target_pose.pose.position.x,
@@ -63,9 +64,9 @@ void constructGoal(MoveBaseClient &ac, tf::Vector3 &trans, double angle_2d)
 /*
     Get ring position
 */
-void ringPoseCallback(geometry_msgs::PointStamped &ring_pose)
+void ringPoseCallback(const geometry_msgs::PointStamped::ConstPtr& ring_pose)
 {
-    ROS_INFO("RING DETECTED %f %f %f\n", ring_pose.point.x, ring_pose.point.y, ring_pose.point.z);
+    ROS_INFO("RING DETECTED %f %f %f\n", ring_pose->point.x, ring_pose->point.y, ring_pose->point.z);
 }
 
 int main(int argc, char **argv)
@@ -85,14 +86,13 @@ int main(int argc, char **argv)
     tf::TransformListener listener;
     tf::StampedTransform transform;
 
-    ringpose_sub = nh.subscribe("input", 1, ringPoseCallback);
+    ringpose_sub = n.subscribe("input", 1, ringPoseCallback);
     vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 
     // main loop
     while (ros::ok())
     {
         ros::Time now = ros::Time::now();
-        waitKey(100);
         ros::spinOnce();
     }
     return 0;
