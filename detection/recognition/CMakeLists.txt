@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   roscpp
   cv_bridge
+  detection_msgs
 )
 
 ## Add include directories
@@ -32,19 +33,6 @@ link_directories(
 )
 
 link_libraries(${Boost_LIBRARIES} ${catkin_LIBRARIES})
-
-## Declare the catkin package
-catkin_package(
-  CATKIN_DEPENDS
-    roscpp
-    sensor_msgs
-    std_msgs
-  DEPENDS
-    Boost
-    Eigen
-    PCL
-)
-
 add_executable (descriptorMaker src/descriptorMaker.cpp)
 add_executable (distanceCalculator src/distanceCalculator.cpp)
 
