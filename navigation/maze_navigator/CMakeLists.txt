@@ -9,14 +9,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-add_action_files(
-  DIRECTORY action
-  FILES Navigate.action
-)
+#add_action_files(
+#  DIRECTORY action
+#  FILES Navigate.action
+#)
 
 generate_messages(
   DEPENDENCIES actionlib_msgs std_msgs  # Or other packages containing msgs
@@ -28,7 +29,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-#add_executable(navigation_server src/navigation_server.cpp)
+add_executable(navigation_server src/ring_pickup.cpp)
 
 #target_link_libraries(
 #  navigation_server
