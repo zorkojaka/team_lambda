@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>   
+	<node pkg="recognition" type="distanceCalculator" name="distanceCalculator" args="12" output="screen">
+		<remap from="faceDesc" to="/descriptor/face"/>
+	</node>
+</launch>
