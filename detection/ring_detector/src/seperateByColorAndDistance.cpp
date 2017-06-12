@@ -9,6 +9,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
+#include <math.h>
 
 ros::Publisher pubR;
 ros::Publisher pubG;
@@ -109,6 +110,9 @@ void callback(const pcl::PCLPointCloud2ConstPtr& cloud_blob) {
 		newpoint.r = b1->r;
 		newpoint.g = b1->g;
 		newpoint.b = b1->b;
+		double distance;
+		distance=newpoint.x*newpoint.x+newpoint.y*newpoint.y+newpoint.z*newpoint.z;
+		if(sqrt(distance)>1.5)continue;
 		switch(label){
 			case 0:colorK->push_back(newpoint);
 			break;

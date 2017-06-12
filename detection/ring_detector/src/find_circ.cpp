@@ -15,7 +15,7 @@ double mrkR[]={1.0,1.0,0.1,0.1,1.0,0.1};
 double mrkG[]={1.0,0.1,1.0,0.1,1.0,0.1};
 double mrkB[]={1.0,0.1,0.1,1.0,0.1,0.1};
 double radMin[]={0.0,0.05, 0.09, 0.04, 0.0, 0.2};
-double radMax[]={1.0,0.08, 0.12, 0.06, 1.0, 0.5};
+double radMax[]={1.0,0.12, 0.16, 0.08, 1.0, 0.8};
 int thisNode=0;
 int minNumInliers=15;
 ros::Publisher pub;
@@ -111,7 +111,7 @@ int main (int argc, char** argv) {
 			thisNode=5;
 		else
 			thisNode=0;
-		printf("Started node! Its color is:%s\n", namespaces[thisNode]);
+		printf("Started circle node! Its color is:%s\n", namespaces[thisNode]);
 	}
 	else
 		thisNode=0;
