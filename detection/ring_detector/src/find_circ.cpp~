@@ -46,8 +46,8 @@ void callback(const pcl::PCLPointCloud2ConstPtr& cloud_blob) {
 	double xLoc=(double)coefficients->values[2]-0.1;
 	double yLoc=(double)-coefficients->values[0];
 	double zLoc=(double)-coefficients->values[1]+0.3;
-	if(thisNode == 3)
-		printf("%s numInliers:%d\n", namespaces[thisNode], inliers->indices.size());
+	//if(thisNode == 3)
+	//	printf("%s numInliers:%d\n", namespaces[thisNode], inliers->indices.size());
 	if (inliers->indices.size() <minNumInliers) 
 		return;
 	if(sqrt(xLoc*xLoc + yLoc*yLoc + zLoc*zLoc)>2){
