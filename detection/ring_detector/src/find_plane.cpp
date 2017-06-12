@@ -58,8 +58,6 @@ void callback(const pcl::PCLPointCloud2ConstPtr& cloud_blob) {
   pub.publish (outcloud);
 }
 
-
-
 int main (int argc, char** argv) {
 
   // Initialize ROS

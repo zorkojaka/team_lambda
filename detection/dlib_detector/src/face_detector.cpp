@@ -69,9 +69,7 @@ void detectCallback(const sensor_msgs::ImageConstPtr& cam_msg) {
 }
 
 void toggleCallback(const std_msgs::Bool& toggle) {
-
 	active = toggle.data;
-
 }
 
 int main(int argc, char** argv) {
