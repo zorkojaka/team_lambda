@@ -51,11 +51,12 @@ vector<TargetCell> ExplPlanner::getVisibleTargetCells(const RobotPose &r_pos, Co
 void ExplPlanner::init(const RobotPose &r_pos, Costmap &costmap)
 {
     constructExplorationMap(r_pos, costmap);
-   // constructPlan(costmap);
+    // constructPlan(costmap);
+    expl_map_ = Explmap(costmap.height_, costmap.width_);
     init_ = true;
 }
 
-void ExplPlanner::addLayer(std::vector< std::vector<int> > layer_map, int height, int width,
+void ExplPlanner::addLayer(std::vector<std::vector<int> > layer_map, int height, int width,
                            int layer_flag)
 {
     expl_map_.addLayer(layer_map, height, width, layer_flag);
@@ -64,13 +65,59 @@ void ExplPlanner::addLayer(std::vector< std::vector<int> > layer_map, int height
 void ExplPlanner::constructExplorationMap(const RobotPose &r_pos, Costmap &costmap)
 {
 
-    // constructLayer(r_pos, ROBOT_REACHABLE); // floodfill robot reachable
+    constructLayer(r_pos, costmap, LAYER_ROBOT_REACHABLE); // floodfill robot reachable
     // constructLayer(r_pos, COND_REACHABLE); // floodfill conditionali reachable
+}
+
+void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap& costmap, int layer_flag)
+{
+    dq_.clear();
+
+    dq_.pb(mp(r_pos.y_, r_pos.x_));
+    while (!dq_.empty())
+    {
+        pair<int, int> top = dq_.front();
+        dq_.pop_front();
+
+        int y = top.first;
+        int x = top.second;
+
+        if (layer_flag == LAYER_ROBOT_REACHABLE && !costmap.isFree(y, x))
+            continue;
+
+        //if (layer_flag == COND_REACHABLE && Costmap.isObstacle(y, x))
+        //    continue;
+        if (expl_map_.getLabel(y, x) & layer_flag)
+            continue;
+        expl_map_.setLabel(y, x, expl_map_.getLabel(y, x) | layer_flag);
+
+        // 8 - connect
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int ay = y + dy;
+                int ax = x + dx;
+
+                if (!costmap.inBounds(ay, ax))
+                    continue;
+
+                if (layer_flag == LAYER_ROBOT_REACHABLE && !costmap.isFree(ay, ax))
+                    continue;
+                if (layer_flag == LAYER_ROBOT_REACHABLE && costmap.isObstacle(ay, ax))
+                    continue;
+                if (expl_map_.getLabel(y, x) & layer_flag)
+                    continue;
+
+                dq_.pb(mp(ay, ax));
+            }
+        }
+    }
 }
 
 // map enrichment
 RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
-                      Costmap &costmap, bool &goal_found)
+                                   Costmap &costmap, bool &goal_found)
 {
     RobotPose r_goal;
     dq_.clear();

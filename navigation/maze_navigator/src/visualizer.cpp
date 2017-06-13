@@ -1,4 +1,4 @@
-
+#include <maze_navigator/visualizer.h>
 
 visualization_msgs::Marker createPointCloud(int id, float r, float g, float b)
 {
@@ -34,16 +34,16 @@ geometry_msgs::Point createPoint(double x, double y, double z)
 }
 
 /*
-    Visualize costmap layer.
+    Visualize exploration map layer.
 */
-void visualizeLayer(const ros::Publisher &vis_pub, const Planner &planner, int layer_flag,
+void visualizeLayer(const ros::Publisher &vis_pub, const Explmap &expl_map, Costmap& costmap, int layer_flag,
                     visualization_msgs::Marker point_cloud)
 {
-    for (int y = 0; y < costmap.height_; y++)
+    for (int y = 0; y < expl_map.height_; y++)
     {
-        for (int x = 0; x < costmap.width_; x++)
+        for (int x = 0; x < expl_map.width_; x++)
         {
-            if (planner.aux_map_[y][x] & layer_flag)
+            if (expl_map.aux_map_[y][x] & layer_flag)
             {
                 double wx, wy;
                 costmap.fromPixel(y, x, wy, wx);
@@ -62,6 +62,7 @@ void visualizeLayer(const ros::Publisher &vis_pub, const Planner &planner, int l
 /*
     Visualize given field of view.
 */
+/*
 void visualizeFoV(const ros::Publisher &vis_pub, FoV &fov)
 {
     // visualize view rays
@@ -119,20 +120,19 @@ void debug(const ros::Publisher &vis_pub,
     }
     vis_pub.publish(point_cloud);
 }
+*/
 
-void visualizePlanner(const ros::Publisher &vis_pub, const Planner &planner)
+void visualizeMultipleLayers(const ros::Publisher &vis_pub, const Explmap &expl_map, Costmap& costmap)
 {
-    //debug(vis_pub, createPointCloud(2, 0, 1, 0));
-    //visualizeLayer(vis_pub, planner, COND_REACHABLE, createPointCloud(1, 0.5, 0, 0.5));
-    visualizeLayer(vis_pub, planner, ROBOT_REACHABLE, createPointCloud(2, 0, 1, 0));
-    visualizeLayer(vis_pub, planner, TARGET_CELL, createPointCloud(3, 1.0, 0, 0));
-    //   visualizeLayer(vis_pub, planner, ENLIGHT, createPointCloud(4, 0.5, 0.8, 0.0));
-   // visualizeLayer(vis_pub, planner, TARGET_REACHED, createPointCloud(4, 0.5, 0.8, 0.0));
-    // visualizeFoV(vis_pub, planner);
+    visualizeLayer(vis_pub, expl_map, costmap,
+        LAYER_TARGET_CELL, createPointCloud(0,1.0,0.0,0.0));  
+    visualizeLayer(vis_pub, expl_map, costmap,
+        LAYER_TARGET_REACHED, createPointCloud(1,0.0,1.0,0.0));
 }
 
+
 void visualizeSinglePoint(const ros::Publisher &vis_pub, RobotPose& r_pos){
-    visualization_msgs::Marker point_cloud = createPointCloud(11, 1.0, 0.0, 0.0);
+    visualization_msgs::Marker point_cloud = createPointCloud(11, 0.0, 0.0, 1.0);
     point_cloud.scale.x = 0.1; // point width
     point_cloud.scale.y = 0.1; // point height
 
@@ -141,11 +141,10 @@ void visualizeSinglePoint(const ros::Publisher &vis_pub, RobotPose& r_pos){
     p.y = r_pos.wy_;
     p.z = 0;
     point_cloud.points.push_back(p);
-    
     vis_pub.publish(point_cloud);
 }
 
-
+/*
 visualization_msgs::Marker createArrow(int id, double r, double g, double b){
     visualization_msgs::Marker arrow;
     arrow.header.stamp = ros::Time::now();
@@ -166,8 +165,8 @@ visualization_msgs::Marker createArrow(int id, double r, double g, double b){
     return arrow;
 }
 
+/*
 float rgb[4][3] = {{1,0,0}, {0,1,0}, {0,0,1}, {1,1,1}};
-    
 void visualizeRobotOrientation(const ros::Publisher &vis_pub, RobotPose& r_pos, RobotPose& r_goal){
     ROS_INFO("VISUALIZE ROBOT ORIENTATION");
     int arrow_cnt = 0;
@@ -213,3 +212,4 @@ void visualizeRobotOrientation(const ros::Publisher &vis_pub, RobotPose& r_pos, 
     vis_pub.publish(arrow);
     arrow_cnt++;
 }
+*/

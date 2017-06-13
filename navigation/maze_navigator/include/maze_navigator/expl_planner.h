@@ -1,5 +1,5 @@
 #ifndef EXPL_PLANNER_H
-#define EXPLORATION_PLANNER_H
+#define EXPL_PLANNER_H
 
 #include <vector>
 #include <tf/tf.h>
@@ -42,7 +42,7 @@ class ExplPlanner
         expl_map_ = Explmap(255, 255);
     }
 
-    void init(const RobotPose &r_pos, Costmap &Costmap);
+    void init(const RobotPose &r_pos, Costmap &costmap);
 
     // callbacks
     RobotPose getNextGoal(const RobotPose &r_pos, Costmap &costmap, bool &goal_found);
@@ -60,48 +60,7 @@ class ExplPlanner
     std::vector<TargetCell> getVisibleTargetCells(const RobotPose &r_pos, Costmap &costmap);
     void constructExplorationMap(const RobotPose &r_pos, Costmap &costmap);
 
-    /*void constructLayer(const RobotPose &r_pos, int layer_flag)
-    {
-        dq_.pb(mp(r_pos.y_, r_pos.x_));
-        while (!dq_.empty())
-        {
-            pair<int, int> top = dq_.front();
-            dq_.pop_front();
-
-            int y = top.first;
-            int x = top.second;
-
-            if (layer_flag == ROBOT_REACHABLE && !Costmap.isFree(y, x))
-                continue;
-            if (layer_flag == COND_REACHABLE && Costmap.isObstacle(y, x))
-                continue;
-            if (aux_map_[y][x] & layer_flag)
-                continue;
-            aux_map_[y][x] |= layer_flag;
-
-            // 8 - connect
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                for (int dy = -1; dy <= 1; dy++)
-                {
-                    int ay = y + dy;
-                    int ax = x + dx;
-
-                    if (!Costmap.inBounds(ay, ax))
-                        continue;
-
-                    if (layer_flag == ROBOT_REACHABLE && !Costmap.isFree(ay, ax))
-                        continue;
-                    if (layer_flag == COND_REACHABLE && Costmap.isObstacle(ay, ax))
-                        continue;
-                    if (aux_map_[ay][ax] & layer_flag)
-                        continue;
-
-                    dq_.pb(mp(ay, ax));
-                }
-            }
-        }
-    }*/
+    void constructLayer(const RobotPose &r_pos, Costmap& costmap, int layer_flag);
 };
 
 #endif

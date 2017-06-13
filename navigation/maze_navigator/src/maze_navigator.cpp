@@ -33,6 +33,8 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 #include <maze_navigator/robot_pose.h>
 #include <maze_navigator/expl_planner.h>
 #include <maze_navigator/costmap.h>
+#include <maze_navigator/visualizer.h>
+
 
 #define mp make_pair
 #define pb push_back
@@ -43,6 +45,8 @@ using namespace cv;
 Costmap costmap;          // maze costmap
 ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
+
+bool goal_in_progress;
 
 // layer paths
 char* target_layer_path;
@@ -57,19 +61,17 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
     costmap.store(msg_map);
 }
 
-/*
-    Action client interaction.
+/*  
+    Sends goal to move_base
 */
-
-bool goal_sent = false;
-void sendGoal(MoveBaseClient &ac, RobotPose &r_goal, RobotPose &r_pos, Costmap &costmap)
+void sendGoal(MoveBaseClient &ac, RobotPose &r_goal)
 {
     move_base_msgs::MoveBaseGoal goal;
 
     goal.target_pose.header.frame_id = "/map";
     goal.target_pose.header.stamp = ros::Time::now();
 
-    ROS_INFO("Moving ROBOT -> (%f %f) to (%f %f)\n", r_pos.wy_, r_pos.wx_, r_goal.wy_, r_goal.wx_);
+    //ROS_INFO("Moving ROBOT -> (%f %f) to (%f %f)\n", r_pos.wy_, r_pos.wx_, r_goal.wy_, r_goal.wx_);
 
     // translation
     goal.target_pose.pose.position.x = r_goal.wx_;
@@ -92,24 +94,28 @@ void sendGoal(MoveBaseClient &ac, RobotPose &r_goal, RobotPose &r_pos, Costmap &
 
     ac.sendGoal(goal);
 
-    goal_sent = true;
+    goal_in_progress = true;
 }
 
-void checkGoal(MoveBaseClient &ac, const RobotPose &r_pos)
+
+/*
+    Checks state of currently executing goal.
+*/
+void checkGoalState(MoveBaseClient &ac)
 {
     if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_INFO("Goal reached (%f, %f, %f) [%f, %f, %f, %f]\n",
-                 r_pos.wx_,
-                 r_pos.wy_,
-                 r_pos.wz_,
-                 r_pos.rot_quat_.x(),
-                 r_pos.rot_quat_.y(),
-                 r_pos.rot_quat_.z(),
-                 r_pos.rot_quat_.w());
+                 robot_pose.wx_,
+                 robot_pose.wy_,
+                 robot_pose.wz_,
+                 robot_pose.rot_quat_.x(),
+                 robot_pose.rot_quat_.y(),
+                 robot_pose.rot_quat_.z(),
+                 robot_pose.rot_quat_.w());
 
-        expl_planner.goalReachedCb(r_pos, costmap);
-        goal_sent = false;
+        expl_planner.goalReachedCb(robot_pose, costmap);
+        goal_in_progress = false;
     }
     else
     {
@@ -205,12 +211,11 @@ bool readArgs(int argc, char** argv){
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "maze_navigator");
-    ROS_INFO("HELLO!");
     if(!readArgs(argc, argv))
         return -1;
-
+    
+    /*
     Mat image = loadExplPlannerLayers();
-    return 0;
     namedWindow( "Display window");// Create a window for display.
     
     while (ros::ok())
@@ -222,6 +227,7 @@ int main(int argc, char **argv)
         
     }
     return 0;
+    */
 
     // initialize handlers
     ros::NodeHandle n;
@@ -244,7 +250,7 @@ int main(int argc, char **argv)
 
     // goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);
     // vis_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
-    // vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 
     // goal sender
     MoveBaseClient ac("move_base", true);
@@ -258,6 +264,8 @@ int main(int argc, char **argv)
     RobotPose r_goal;
     RobotPose r_start;
 
+    goal_in_progress = false;
+
     // main loop
     while (ros::ok())
     {
@@ -266,42 +274,23 @@ int main(int argc, char **argv)
             continue;
         if (!plannerAndCostmapReady())
             continue;
-
-        /* else
+        
+        if(goal_in_progress){
+            checkGoalState(ac);
+        }
+        else
         {
-            if (goal_sent)
-            {
-                checkGoal(ac, planner, r_pos);
+            bool goal_found = false;
+            r_goal = expl_planner.getNextGoal(robot_pose, costmap, goal_found);
+            
+            visualizeSinglePoint(vis_pub, r_goal);
+
+            if(!goal_found){
+                continue;
             }
-            else
-            {
-                bool goal_found = false;
-                r_goal = planner.getNextGoal(r_pos, costmap, goal_found);
-                visualizeSinglePoint(vis_pub, r_goal);
-
-                if(!goal_found){
-                    r_goal = r_start;
-                    ROS_INFO("RETURNING BACK TO STARTING POINT\n");
-                }
-
-                sendGoal(ac, r_goal, r_pos, costmap);
-            }
+            sendGoal(ac, r_goal);
         }
-
-        if(goal_sent && vis_counter == 20){
-            FoV fov = calcFieldOfView(r_goal,costmap);
-     //       visualizeFoV(vis_pub, fov);
-            visualizePlanner(vis_pub, planner);
-     
-       //     visualizeRobotOrientation(vis_pub, r_pos, r_goal);
-            vis_counter = 0;
-        }
-        */
-
-//        ROS_INFO("VISUALIZING PLANNER");
-//        visualizePlanner(vis_pub, planner);
-//        vis_counter++;
-//        waitKey(100);
+        waitKey(100);
         ros::spinOnce();
     }
     return 0;
