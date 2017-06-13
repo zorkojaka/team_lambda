@@ -39,6 +39,7 @@ class ExplPlanner
         init_ = false; 
         y_axis_ = tf::Vector3(0, 1, 0);
         z_axis_ = tf::Vector3(0, 0, 1);
+        expl_map_ = Explmap(255, 255);
     }
 
     void init(const RobotPose &r_pos, Costmap &Costmap);
@@ -47,7 +48,7 @@ class ExplPlanner
     RobotPose getNextGoal(const RobotPose &r_pos, Costmap &costmap, bool &goal_found);
     void goalReachedCb(const RobotPose &r_pos, Costmap &costmap);
 
-    void addLayer(int **layer_map, int height, int width,
+    void addLayer(std::vector< std::vector<int> > layer_map, int height, int width,
                   int layer_flag);
 
   private:

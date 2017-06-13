@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-
-    <node pkg="maze_navigator" type="maze_navigator" name="maze_navigator" output="screen">
+    <arg name="target_layer" default="$(find maze_navigator)/maps/layers/wall_layer.pgm"/>
+  
+    <node pkg="maze_navigator" type="maze_navigator" name="maze_navigator" args="$(arg target_layer)"
+    output="screen">
     </node>
 
 </launch>

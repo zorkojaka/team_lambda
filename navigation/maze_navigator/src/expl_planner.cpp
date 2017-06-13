@@ -55,7 +55,7 @@ void ExplPlanner::init(const RobotPose &r_pos, Costmap &costmap)
     init_ = true;
 }
 
-void ExplPlanner::addLayer(int **layer_map, int height, int width,
+void ExplPlanner::addLayer(std::vector< std::vector<int> > layer_map, int height, int width,
                            int layer_flag)
 {
     expl_map_.addLayer(layer_map, height, width, layer_flag);

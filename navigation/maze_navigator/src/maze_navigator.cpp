@@ -146,18 +146,23 @@ bool updateRobotPose(tf::TransformListener &listener,
     Loads map layers - target cells, etc..
     @returns true if success
 */
-bool loadExplPlannerLayers(){
+Mat loadExplPlannerLayers(){
     Mat image;
     image = imread(target_layer_path, IMREAD_UNCHANGED);   // Read the file
     if(! image.data )                              // Check for invalid input
     {
         cout <<  "Could not open or find the image" << std::endl ;
-        return -1;
+       // return -1;
     }
-    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-    imshow( "Display window", image );                   // Show our image inside it.
-//    expl_planner.addLayer(,height,width,LAYER_TARGET_CELL);
-    return true;
+    
+    vector< vector<int> > l_mat;
+    for(int y = 0; y < image.rows; y++){
+        l_mat.pb(vector<int>());
+        for(int x = 0;x < image.cols;x++)
+           l_mat[y].pb(image.data[y * image.cols + x]);
+    }
+    expl_planner.addLayer(l_mat, l_mat.size(), l_mat[0].size(), LAYER_TARGET_CELL);
+    return image;
 }
 
 /*
@@ -201,11 +206,22 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "maze_navigator");
     ROS_INFO("HELLO!");
-    return 0;
-    //if(!readArgs(argc, argv))
-    //    return -1;
-    //loadExplPlannerLayers();
+    if(!readArgs(argc, argv))
+        return -1;
 
+    Mat image = loadExplPlannerLayers();
+    return 0;
+    namedWindow( "Display window");// Create a window for display.
+    
+    while (ros::ok())
+    {
+        imshow( "Display window", image );                   // Show our image inside it.
+
+        waitKey(30);
+        ros::spinOnce();
+        
+    }
+    return 0;
 
     // initialize handlers
     ros::NodeHandle n;

@@ -60,7 +60,7 @@ TargetCell Explmap::getTargetCell(int y,int x){
     return t_cells_[cell_idx_[y][x]];
 }
 
-void Explmap::addLayer(int **layer_map, int height, int width, int layer_flag)
+void Explmap::addLayer(std::vector< std::vector<int> > layer_map, int height, int width, int layer_flag)
 {
     if (layer_flag == LAYER_TARGET_CELL)
     {
@@ -78,7 +78,7 @@ void Explmap::addLayer(int **layer_map, int height, int width, int layer_flag)
         }
 }
 
-void Explmap::addTargetLayer(int **layer_map)
+void Explmap::addTargetLayer(std::vector< std::vector<int> > layer_map)
 {
     t_cells_.clear();
     int t_cell_idx = 0;

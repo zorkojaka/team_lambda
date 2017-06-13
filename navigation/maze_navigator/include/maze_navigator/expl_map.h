@@ -62,10 +62,10 @@ public:
   void markVisited(int y, int x);
   void markVisitedTargetCell(int y, int x);
 
-  void addLayer(int **layer_map, int height, int width, int layer_flag);
+  void addLayer(std::vector< std::vector<int> > layer_map, int height, int width, int layer_flag);
 
 private:
-  void addTargetLayer(int **layer_map);
+  void addTargetLayer(std::vector< std::vector<int> > layer_map);
 };
 
 #endif
