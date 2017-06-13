@@ -11,6 +11,7 @@
 int sts=3;
 int siz=sts*10;
 int descLen=sts*sts;
+bool penis = true;
 double** createSmaller(int **orgF, int orgX, int orgY){
 	double **smlF=new double* [siz];
 	int **ctr = new int* [siz];
@@ -154,7 +155,11 @@ void printDesc(std_msgs::Float64MultiArray d){
 ros::Publisher pub;
 void callback(const detection_msgs::DetectionConstPtr  det) {
 	sensor_msgs::Image image=det->image;
+	if(penis == true){
 	
+		penis = false;
+	}
+         
 	int sizeX=det->width;
 	int sizeY=det->height;
 	printf("Detekcija velikosti:\nw:%d\nh:%d\n",sizeX,sizeY);
