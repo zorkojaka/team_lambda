@@ -15,35 +15,16 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-#add_action_files(
-#  DIRECTORY action
-#  FILES Navigate.action
-#)
-
-generate_messages(
-  DEPENDENCIES actionlib_msgs std_msgs  # Or other packages containing msgs
-)
-
-catkin_package(
-  CATKIN_DEPENDS actionlib_msgs
-)
-
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-add_executable(maze_navigator src/ring_pickup.cpp)
+add_library(maze_exploration src/costmap.cpp src/expl_map.cpp src/expl_planner.cpp 
+  src/robot_pose.cpp )
+
+
+add_executable(maze_navigator src/maze_navigator.cpp)
 
 target_link_libraries(
   maze_navigator
+  maze_exploration
   ${catkin_LIBRARIES}
 )
-
-#add_dependencies(
-#  navigation_server
-#  ${maze_navigator_EXPORTED_TARGETS}
-#)
-
-## Install project namespaced headers
-#install(DIRECTORY include/${PROJECT_NAME}/
-#  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#  FILES_MATCHING PATTERN "*.h"
-#  PATTERN ".svn" EXCLUDE)

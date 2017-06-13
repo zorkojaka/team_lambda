@@ -31,7 +31,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 
 // project includes
 #include <maze_navigator/robot_pose.h>
-#include <maze_navigator/exploration_planner.h>
+#include <maze_navigator/expl_planner.h>
 #include <maze_navigator/costmap.h>
 
 #define mp make_pair
@@ -47,27 +47,19 @@ RobotPose robot_pose;     // current robot position
 // map callbacks
 void simplemapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
-    costmap.storeSimpleMap(msg_map);
+    costmap.storeSimple(msg_map);
 }
 void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
-    costmap.storeCostMap(msg_map);
+    costmap.store(msg_map);
 }
-
-struct TargetPosition
-{
-    int py_, px_;
-    double angle_;
-    vector<int> ccomp_;
-    vector<pair<int, int>> pts_;
-};
 
 /*
     Action client interaction.
 */
 
 bool goal_sent = false;
-void sendGoal(MoveBaseClient &ac, RobotPose &r_goal, RobotPose &r_pos, CostMap &costmap)
+void sendGoal(MoveBaseClient &ac, RobotPose &r_goal, RobotPose &r_pos, Costmap &costmap)
 {
     move_base_msgs::MoveBaseGoal goal;
 
@@ -100,7 +92,7 @@ void sendGoal(MoveBaseClient &ac, RobotPose &r_goal, RobotPose &r_pos, CostMap &
     goal_sent = true;
 }
 
-void checkGoal(MoveBaseClient &ac, Planner &planner, const RobotPose &r_pos)
+void checkGoal(MoveBaseClient &ac, const RobotPose &r_pos)
 {
     if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
@@ -113,7 +105,7 @@ void checkGoal(MoveBaseClient &ac, Planner &planner, const RobotPose &r_pos)
                  r_pos.rot_quat_.z(),
                  r_pos.rot_quat_.w());
 
-        planner.goalReached(r_pos, costmap);
+        expl_planner.goalReachedCb(r_pos, costmap);
         goal_sent = false;
     }
     else
@@ -127,7 +119,7 @@ void checkGoal(MoveBaseClient &ac, Planner &planner, const RobotPose &r_pos)
     @returns True if success
 */
 bool updateRobotPose(tf::TransformListener &listener,
-                     ros::Time &now)
+                     ros::Time &now, tf::StampedTransform& transform)
 {
     try
     {
@@ -143,6 +135,7 @@ bool updateRobotPose(tf::TransformListener &listener,
     }
 
     robot_pose.update(transform, costmap);
+    return true;
 }
 
 
@@ -151,8 +144,7 @@ bool updateRobotPose(tf::TransformListener &listener,
     @returns true if success
 */
 bool loadExplPlannerLayers(){
-    
-
+    return true;
 }
 
 /*
@@ -169,6 +161,7 @@ bool plannerAndCostmapReady()
         }
         else
             costmap.layerMaps();
+        return false;
     }
     else return true;    
 }
@@ -220,7 +213,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         ros::Time now = ros::Time::now();
-        if (!updateRobotPose(listener, now))
+        if (!updateRobotPose(listener, now, transform))
             continue;
         if (!plannerAndCostmapReady())
             continue;
@@ -259,7 +252,7 @@ int main(int argc, char **argv)
 //        ROS_INFO("VISUALIZING PLANNER");
 //        visualizePlanner(vis_pub, planner);
 //        vis_counter++;
-        waitKey(100);
+//        waitKey(100);
         ros::spinOnce();
     }
     return 0;

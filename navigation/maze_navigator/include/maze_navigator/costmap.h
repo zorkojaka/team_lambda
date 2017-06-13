@@ -1,5 +1,5 @@
-#ifdef COSTMAP_MANIP_H
-#define COSTMAP_MANIP_H
+#ifndef COSTMAP_H
+#define COSTMAP_H
 
 #include <nav_msgs/GetMap.h>
 
@@ -39,7 +39,7 @@ class Costmap
     void fromWorld(double wy, double wx, int &py, int &px);
     
     void store(const nav_msgs::OccupancyGridConstPtr &msg_map);
-    void storeSimple(const nav_msgs::OccupancyGridConstPtr &msg_map)
+    void storeSimple(const nav_msgs::OccupancyGridConstPtr &msg_map);
     void layerMaps();
 
     bool isFree(int y, int x);

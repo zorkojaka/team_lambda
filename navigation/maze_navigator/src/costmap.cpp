@@ -64,7 +64,7 @@ void Costmap::layerMaps()
 
     ROS_INFO("MAP LAYERING\n");
     /*
-            Costmap is changing based of robot laser scan but
+            costmap is changing based of robot laser scan but
             lethal obstacles are fixed. 
         */
     for (int y = 0; y < height_; y++)

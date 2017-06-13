@@ -1,6 +1,8 @@
 #ifndef EXPL_MAP_H
 #define EXPL_MAP_H
 
+#include <vector>
+
 #include <maze_navigator/costmap.h> // MAX_SIZE constant
 
 // map constants
@@ -16,42 +18,54 @@ const int LAYER_PROCESSED = 64;
 /*
     Target cell.
 */
-class TargetCell{
-    public:
-        int y_, x_;
-        int flag;
+class TargetCell
+{
+public:
+  int y_, x_;
 
-        TargetCell(int y,int x): y_(y), x_(x){
-            flag = 0;
-        }
-}
+  TargetCell(int y, int x) : y_(y), x_(x) {}
 
+  bool isSimpleCell();
+  int getId();
+};
 
 /*
     Exploration map.
 */
-class Explmap{
+class Explmap
+{
 
-    public:
-        int cell_idx_[MAX_SIZE][MAX_SIZE];
-        int aux_map_[MAX_SIZE][MAX_SIZE];
-        
-        vector<TargetCell> t_cells_;
+public:
+  int cell_idx_[MAX_SIZE][MAX_SIZE];
+  int aux_map_[MAX_SIZE][MAX_SIZE];
 
-        ExplMap(){}
+  int width_, height_;
+  std::vector<TargetCell> t_cells_;
 
-        int getLabel(int y,int x);
-        void setLabel(int y, int x, int val);
+  Explmap()
+  {}
+  Explmap(int height, int width): height_(height), width_(width)
+  {}
 
-        // helper
-        bool isVisited(int y,int x);
-        bool isRobotReachable(int y,int x);
-        bool isTargetCell(int y,int x);
+  int getLabel(int y, int x);
+  TargetCell getTargetCell(int y, int x);
 
-        void clearVisited();
-        void markVisited(int y,int x);
+  void setLabel(int y, int x, int val);
 
-        void addLayer(int** layer_map, int height, int width, int layer_flag);
-}
+  // helper
+  bool isVisited(int y, int x);
+  bool isVisitedTargetCell(int y, int x);
+  bool isRobotReachable(int y, int x);
+  bool isTargetCell(int y, int x);
+
+  void clearVisited();
+  void markVisited(int y, int x);
+  void markVisitedTargetCell(int y, int x);
+
+  void addLayer(int **layer_map, int height, int width, int layer_flag);
+
+private:
+  void addTargetLayer(int **layer_map);
+};
 
 #endif

@@ -1,7 +1,6 @@
-#include <maze_navigator/geom_util>
-#include <maze_navigator/robot_pose>
+#include <maze_navigator/geom_util.h>
+#include <maze_navigator/robot_pose.h>
 
-RobotPose::RobotPose() { init_ = false; }
 RobotPose::RobotPose(int py_, int px_, Costmap &costmap)
 {
     init_ = true;
