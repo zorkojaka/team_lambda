@@ -200,7 +200,8 @@ bool readArgs(int argc, char** argv){
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "maze_navigator");
-    //ROS_INFO("HELLO!");
+    ROS_INFO("HELLO!");
+    return 0;
     //if(!readArgs(argc, argv))
     //    return -1;
     //loadExplPlannerLayers();

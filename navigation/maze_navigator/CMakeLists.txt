@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+catkin_package()
+
 find_package(Boost REQUIRED COMPONENTS system)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -29,3 +31,4 @@ target_link_libraries(
   maze_exploration
   ${catkin_LIBRARIES}
 )
+

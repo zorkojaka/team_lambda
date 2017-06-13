@@ -73,6 +73,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ring_pickup");
 
+    ROS_INFO("HELLO WORLD!\n");
     // initialize handlers
     ros::NodeHandle n;
 
