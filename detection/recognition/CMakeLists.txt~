@@ -32,9 +32,6 @@ link_directories(
   ${Boost_LIBRARY_DIRS}
 )
 catkin_package()
-
-
-
 link_libraries(${Boost_LIBRARIES} ${catkin_LIBRARIES})
 add_executable (descriptorMaker src/descriptorMaker.cpp)
 add_executable (distanceCalculator src/distanceCalculator.cpp)
