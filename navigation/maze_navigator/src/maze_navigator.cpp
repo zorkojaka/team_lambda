@@ -179,6 +179,7 @@ bool plannerAndCostmapReady()
 {
     if (!expl_planner.init_)
     {
+        ROS_INFO("INITIALIZING COSTMAP");
         if (costmap.init_){
             loadExplPlannerLayers();
             expl_planner.init(robot_pose, costmap);
@@ -275,6 +276,8 @@ int main(int argc, char **argv)
         if (!plannerAndCostmapReady())
             continue;
         
+        ROS_INFO("PLANNER AND COSTMAP PREPARED!");
+
         if(goal_in_progress){
             checkGoalState(ac);
         }
@@ -290,6 +293,9 @@ int main(int argc, char **argv)
             }
             sendGoal(ac, r_goal);
         }
+
+        visualizeMultipleLayers(vis_pub, expl_planner.expl_map_, costmap);
+
         waitKey(100);
         ros::spinOnce();
     }
