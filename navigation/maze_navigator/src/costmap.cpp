@@ -2,7 +2,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 
-#include <maze_navigator/costmap>
+#include <maze_navigator/costmap.h>
 
 void Costmap::fromPixel(int py, int px, double &wy, double &wx)
 {

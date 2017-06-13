@@ -3,8 +3,14 @@
 
 #include <nav_msgs/GetMap.h>
 
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
+
+
 const int MAX_SIZE = 600;
 
+// costmap constants
 const int FREE_CELL = 0;
 const int OCC_CELL = 255;
 
