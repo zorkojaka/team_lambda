@@ -44,6 +44,9 @@ Costmap costmap;          // maze costmap
 ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
 
+// layer paths
+char* target_layer_path;
+
 // map callbacks
 void simplemapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
@@ -144,6 +147,16 @@ bool updateRobotPose(tf::TransformListener &listener,
     @returns true if success
 */
 bool loadExplPlannerLayers(){
+    Mat image;
+    image = imread(target_layer_path, IMREAD_UNCHANGED);   // Read the file
+    if(! image.data )                              // Check for invalid input
+    {
+        cout <<  "Could not open or find the image" << std::endl ;
+        return -1;
+    }
+    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+    imshow( "Display window", image );                   // Show our image inside it.
+//    expl_planner.addLayer(,height,width,LAYER_TARGET_CELL);
     return true;
 }
 
@@ -167,12 +180,31 @@ bool plannerAndCostmapReady()
 }
 
 
+bool readArgs(int argc, char** argv){
+    if( argc < 2)
+    {
+        ROS_ERROR(" Usage: maze_navigator target_layer\n");
+        return false;
+    }
+
+    target_layer_path = argv[1];
+    return true;
+}
+
 /*
     Main planning node.
+
+    args1: target_layer pgm file
+
 */
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "maze_navigator");
+    //ROS_INFO("HELLO!");
+    //if(!readArgs(argc, argv))
+    //    return -1;
+    //loadExplPlannerLayers();
+
 
     // initialize handlers
     ros::NodeHandle n;
