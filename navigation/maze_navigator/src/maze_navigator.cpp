@@ -373,7 +373,11 @@ int main(int argc, char **argv)
 
     // maze map
     costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
+<<<<<<< HEAD
 //    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
+=======
+   // costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
+>>>>>>> abc30b832497498e149d899be81d63a3bc9ccef5
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
 
  //   face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);

@@ -13,9 +13,18 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/features/normal_3d.h>
 
+#include <geometry_msgs/PointStamped.h>
+
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
+
+
 ros::Publisher pub;
 
 typedef pcl::PointXYZRGB PointT;
+tf::TransformListener* listener;
+
 
 double rAvg = 0, gAvg = 0, bAvg = 0;
 int i = 0;
@@ -23,8 +32,6 @@ char *namespaces[] = {"undefined", "red", "green", "blue", "yellow", "black"};
 double mrkR[] = {1.0, 1.0, 0.1, 0.1, 1.0, 0.1};
 double mrkG[] = {1.0, 0.1, 1.0, 0.1, 1.0, 0.1};
 double mrkB[] = {1.0, 0.1, 0.1, 1.0, 0.1, 0.1};
-double radMin[] = {0.0, 0.05, 0.09, 0.04, 0.0, 0.2};
-double radMax[] = {1.0, 0.08, 0.12, 0.06, 1.0, 0.5};
 int thisNode = 0;
 int minNumInliers = 800;
 int numInliers = 0;
@@ -96,16 +103,35 @@ void callback(const pcl::PCLPointCloud2ConstPtr &cloud_blob)
 
 	printf("CYLINDER %s Center: %f, %f, %f\n", namespaces[thisNode], coefficients->values[0], coefficients->values[1], coefficients->values[2]);
 
+	geometry_msgs::PointStamped poseBaseLink;
+	poseBaseLink.header.frame_id = "/base_link";
+	poseBaseLink.header.stamp = ros::Time(0);
+	poseBaseLink.point.x = (double)coefficients->values[2] - 0.1; //KOLIKO PRED NJIM
+	poseBaseLink.point.y = (double)-coefficients->values[0]; //KOLIKO LEVO OD NJEGA
+	poseBaseLink.point.z = 0.0; //KOLIKO NAD NJIM
+	
+	geometry_msgs::PointStamped poseMap;
+
+	// transform to /map frame
+	try{
+      listener->transformPoint("/map", poseBaseLink, poseMap);
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      return;
+    }
+
+
 	visualization_msgs::Marker marker;
-	marker.header.frame_id = "/base_link";
+	marker.header.frame_id = "/map";
 	marker.header.stamp = ros::Time::now();
 	marker.ns = namespaces[thisNode];
 	marker.id = 3;
 	marker.type = visualization_msgs::Marker::CYLINDER;
 	marker.action = visualization_msgs::Marker::ADD;
-	marker.pose.position.x = (double)coefficients->values[2] - 0.1; //KOLIKO PRED NJIM
-	marker.pose.position.y = (double)-coefficients->values[0];		//KOLIKO LEVO OD NJEGA
-	marker.pose.position.z = 0.0;									//(double)-coefficients->values[1]+0.3;//KOLIKO NAD NJIM
+	marker.pose.position.x = poseMap.point.x; //KOLIKO PRED NJIM
+	marker.pose.position.y = poseMap.point.y; //KOLIKO LEVO OD NJEGA
+	marker.pose.position.z = 0.2; //KOLIKO NAD NJIM
 	marker.pose.orientation.x = 0.0;
 	marker.pose.orientation.y = 0.0;
 	marker.pose.orientation.z = 0.0;
@@ -144,6 +170,8 @@ int main(int argc, char **argv)
 	else
 		thisNode = 0;
 	ros::init(argc, argv, "find_cyl");
+	listener = new tf::TransformListener();
+
 	ros::NodeHandle nh;
 
 	// Create a ROS subscriber for the input point cloud
