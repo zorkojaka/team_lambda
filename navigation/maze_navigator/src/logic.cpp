@@ -485,6 +485,52 @@ void pogovor(int id){
 	
 }
 
+
+// preveri če smo že najdl dovolj moških ali žensk da druge izklučimo
+void prisotnostoseb(){
+	person *m=manhead->next;
+	person *w=womanhead->next;
+	
+	int stm=0;
+	int stw=0;
+	
+	//z zanko preštejemo koliko moških je prisotnih
+	while(m!=NULL){
+		if(m->prisotnost==1){
+			stm++;
+		}
+		m=m->next;
+	}
+		
+	//će že mamo 3 moške ostali odpadejo
+	if(stm>2){
+		while(m!=NULL){
+			if(m->prisotnost!=1){
+				m->prisotnost=-1;
+			}
+			m=m->next;
+		}
+	}
+	
+	//pteštejemo koliko žensk je prisotnih
+	while(w!=NULL){
+		if(w->prisotnost==1){
+			stw++;
+		}
+		w=w->next;
+	}
+	//če že mamo 3 ženske ostale odpadejo
+	if(stw>2){
+		while(w!=NULL){
+			if(w->prisotnost!=1){
+				w->prisotnost=-1;
+			}
+			w=w->next;
+		}
+	}
+}
+
+
 /*
 MAIN
 
@@ -497,10 +543,16 @@ while(ne najdemo vseh ringov, cilindrov, obrazov){
 	go to next point
 	if(PREPOZNAMO OSEBO){ 
 		pogovor(getid());	//from listener
+		//zaženi da prevermo če smo jih že dost najdl da drug izklučmo
+		prisotnostoseb(); 
 	}
 }
 int ringID = inforingcheck(manhead);
 int cilinderID = inforingcheck(womanhead);
+
+if(ringID != 0 && cilinderID != 0){
+	vemo kar mormo, lahko gremo do oseb, ki vejo...
+}
 
 
 */

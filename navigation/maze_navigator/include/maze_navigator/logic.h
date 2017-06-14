@@ -14,4 +14,4 @@ void spoznavanjeoseb()
 
 void pogovor(struct person per)
 
-
+void prisotnostoseb()
