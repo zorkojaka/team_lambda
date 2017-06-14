@@ -78,7 +78,7 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
     ROS_INFO("COSTMAP COSTMAP REVEICEV");
     costmap.store(msg_map);
 }
-
+void costmapUpdatesCallback()
 // detection callbacks
 void facePositionCallback(const geometry_msgs::PoseArray::ConstPtr& msg){
     maze_objects.facePositionCallback(msg);
@@ -299,62 +299,7 @@ bool goalInExec(){
     return exec_goal.size() > 0;
 }
 
-
-
-/*
-    Main planning node.
-
-    args1: target_layer pgm file
-*/
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, "maze_navigator");
-    if (!readArgs(argc, argv))
-        return -1;
-
-    // initialize handlers
-    ros::NodeHandle n;
-
-    // subscribers
-    ros::Subscriber costmap_sub;
-    ros::Subscriber simplemap_sub;
-    ros::Subscriber face_sub;
-    ros::Subscriber speech_sub;
-
-    // publishers
-    ros::Publisher goal_pub;
-    ros::Publisher vis_pub;
-
-    // maze map
-    costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
-    simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
-
-    face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
-    speech_sub = n.subscribe ("/recognizer/output", 1, &callbackodg);
-
-
-    // frame transformer
-    tf::TransformListener listener;
-    tf::StampedTransform transform;
-
-    // goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);
-    // vis_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
-    vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
-
-    // goal sender
-    MoveBaseClient ac("move_base", true);
-
-    //wait for the action server to come up
-    while (!ac.waitForServer(ros::Duration(5.0)))
-    {
-        ROS_INFO("Waiting for the move_base action server to come up");
-    }
-
-    RobotPose r_goal;
-    RobotPose r_start;
-    RobotPose t_pos;
-
-
+void testLogic(){
     // logic init
     spoznavanjeoseb();
     pogovor(1);
@@ -381,6 +326,63 @@ int main(int argc, char **argv)
     pogovor(9);
     printMenHead();
     printWomenHead();
+}
+
+/*
+    Main planning node.
+
+    args1: target_layer pgm file
+*/
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "maze_navigator");
+    if (!readArgs(argc, argv))
+        return -1;
+
+    // initialize handlers
+    ros::NodeHandle n;
+
+    // subscribers
+    ros::Subscriber costmap_sub;
+    ros::Subscriber costmap_update_sub;
+    
+    ros::Subscriber simplemap_sub;
+    ros::Subscriber face_sub;
+    ros::Subscriber speech_sub;
+
+    // publishers
+    ros::Publisher goal_pub;
+    ros::Publisher vis_pub;
+
+    // maze map
+    costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
+    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
+    simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
+
+    face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
+    speech_sub = n.subscribe ("/recognizer/output", 1, &callbackodg);
+
+
+    // frame transformer
+    tf::TransformListener listener;
+    tf::StampedTransform transform;
+
+    // goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);
+    // vis_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
+    vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+
+    // goal sender
+    MoveBaseClient ac("move_base", true);
+
+    //wait for the action server to come up
+    while (!ac.waitForServer(ros::Duration(5.0)))
+    {
+        ROS_INFO("Waiting for the move_base action server to come up");
+    }
+
+    RobotPose r_goal;
+    RobotPose r_start;
+    RobotPose t_pos;
 
     // main loop
     ROS_INFO("Starting main loop...");
