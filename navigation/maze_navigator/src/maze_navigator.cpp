@@ -306,51 +306,83 @@ bool goalInExec(){
 }
 
 void testLogic(){
-    // logic init
+    string odgovor;
+	// logic init
     spoznavanjeoseb();
     
-
-    pogovor(1);
-
+	//RAZISKOVANJE DOKLER NE NAJDEMO OSEBE 
+	//PODAMO ID v pogovor
+	//pogovor se izvede za vsakega človeka k ga recognizamo
+	pogovor(1);
     prisotnostoseb();
-    int neki = gotinfo();
-    if(neki==1)ROS_INFO("SPREEEMNII!!");
-    
-    
-    printMenHead();
-    printWomenHead(); 
-    
-    pogovor(2); 
-    
-        prisotnostoseb();
-    if(gotinfo()==1){
-        ROS_INFO("SPREEEMNII!!");
-    }
-    printMenHead();
-    printWomenHead();
+    int spremni = gotinfo();
+	int personwithringinfo;
+	int personwithcilinderinfo;
+    if(spremni==1){
+		ROS_INFO("Imamo informacije za nadaljevanje");
+	}
+    //printMenHead();
+    //printWomenHead();
 
-    pogovor(3); 
+	//po koncu raziskovanja:
+	if(spremni==0){
+		pogovor(1);//pogovor with any man robot have to move there
+	}else{
+		personwithringinfo=returnringinfoid();
+		personwithcilinderinfo=returncilinderinfoid();
+		//go to ringperson..
+		if(personwithringinfo<7){
+			ringmoski();
+		}else{
+					
+			if(returntruth(personwithringinfo)==1){
+				system("rosrun sound_play say.py 'Which ring has magical power?'");
+			}else{//uprašanje za lažnivko
+				system("rosrun sound_play say.py 'Which ring has not magical power?'");
+			}
+						odgovor=getanswer();
+			switch(odgovor){
+				case("green"):	bringring(1);
+								break;
+				case("red"): 	bringring(2);
+								break;
+				case("blue"):	bringring(3);
+								break;
+				case("black"): 	bringring(4);
+								break;
+			}
+		}//Dvigne se ring
+		
+		//SAM ŠE DO CILINDRA PA DAM
+		//go to cilinderperson..
+		if(personwithcilinderinfo<7){
+			cilindermoski();
+		}else{		
+			if(returntruth(personwithcilinderinfo)==1){
+				system("rosrun sound_play say.py 'Which tower is magical?'");
+			}else{//uprašanje za lažnivko
+				system("rosrun sound_play say.py 'Which tower is not magical?'");
+			}
+						odgovor=getanswer();
+			switch(odgovor){
+				case("red"):	bringring(1);
+								break;
+				case("green"): 	bringring(2);
+								break;
+				case("blue"):	bringring(3);
+								break;
+				case("yellow"): bringring(4);
+								break;
+			}
+		}//Dvigne se cilinder
+		
+		
+		//OVER AND HOME
+		
+		
+	}
     
-        prisotnostoseb();
-    if(gotinfo()==1){
-        ROS_INFO("SPREEEMNII!!");
-    }
-    printMenHead();
-    printWomenHead();
-    
-
-    pogovor(7);
-    printMenHead();
-    printWomenHead();
- 
-    pogovor(8);
-    printMenHead();
-    printWomenHead();
- 
-    pogovor(9);
-    printMenHead();
-    printWomenHead();
-}
+   
 
 
 /*

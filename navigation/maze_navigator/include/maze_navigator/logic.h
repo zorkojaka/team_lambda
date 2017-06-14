@@ -10,6 +10,11 @@ void printMenHead();
 void printWomenHead();
 int gotinfo();
 void prisotnostoseb();
-
+int returnringinfoid();
+int returncilinderinfoid();
+void cilindermoski();
+void ringmoski();
+string getanswer();
+int returntruth(int id);
 #endif
 

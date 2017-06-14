@@ -186,6 +186,14 @@ string returnName(int id)
 	}
 }
 
+int returnringinfoid(){
+	return poznamoring;
+}
+
+int returncilinderinfoid(){
+	return poznamocilinder;
+}
+
 
 //Print podanega linked lista, podamo manhead/womanhead napiše vse podatke
 void printlist(person *head)
@@ -328,6 +336,23 @@ string waitforanswer(){
 	return novabeseda;
 }
 
+int returntruth(int id){
+	person *per;
+	
+	if(id>6){//mamo žensko
+		per=womanhead->next;
+	}else{//mamo moškega
+		per=manhead->next;
+	}
+	
+	//nastavmo per na pravo osebo
+	while(per->id != id){
+		per=per->next;
+	}
+	
+	return per->truth;
+}
+
 string getanswer(){
 	stringstream stream;
 	string odgovor;
@@ -388,6 +413,58 @@ int gotinfo(){
 
 }
 
+void ringmoski(){
+	string odgovor;
+	system("rosrun sound_play say.py 'Is the magical ring bigger than the blue one?'");
+	
+	odgovor=getanswer();
+	if(odgovor == "yes"){
+		system("rosrun sound_play say.py 'Is the green ring magical?'");
+		odgovor=getanswer();
+		if(odgovor == "yes"){
+			bringring(1);
+		}else{
+			bringring(2);
+		}
+	}else{
+		system("rosrun sound_play say.py 'Is the blue ring magical?'");
+		odgovor=getanswer();
+		if(odgovor == "yes"){
+			bringring(3);
+		}else{
+			bringring(4);
+		}
+	}
+}
+
+
+void cilindermoski(){
+	string odgovor;
+	system("rosrun sound_play say.py 'Is the magical tower either blue or yellow?'");
+	
+	odgovor=getanswer();
+	if(odgovor == "yes"){
+		system("rosrun sound_play say.py 'Is the magical tower yellow?'");
+		odgovor=getanswer();
+		if(odgovor == "yes"){
+			gototower(4);//YELLOW
+		}else{
+			gototower(3);//BLUE
+		}
+	}else{
+		system("rosrun sound_play say.py 'Is the magical tower green?'");
+		odgovor=getanswer();
+		if(odgovor == "yes"){
+			gototower(2);//GREEN
+		}else{
+			gototower(1);//RED
+		}
+	}
+}
+
+
+
+
 /*POGOVOR:
 - z žensko: vprašamo če je ženska -> rensica/laž
 - 1. moški: vprašamo če ima info kje je ring/cilinder moški
@@ -400,8 +477,6 @@ void pogovor(int id){
 
 	int systemout=0;
 	
-	
-
 	stringstream stream;
 	string odgovor;
 
