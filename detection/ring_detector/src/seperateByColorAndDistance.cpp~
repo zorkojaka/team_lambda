@@ -141,15 +141,15 @@ void callback(const pcl::PCLPointCloud2ConstPtr& cloud_blob) {
 	cloud_colorY->header.frame_id= cloud_blob->header.frame_id;
 	cloud_colorK->header.frame_id= cloud_blob->header.frame_id;
 	
-	if(cloud_colorR->data.size()>30)
+	if(cloud_colorR.data.size()>30)
 		pubR.publish(*cloud_colorR);
-	if(cloud_colorG->data.size()>30)
+	if(cloud_colorG.data.size()>30)
 		pubG.publish(*cloud_colorG);
-	if(cloud_colorB->data.size()>30)
+	if(cloud_colorB.data.size()>30)
 		pubB.publish(*cloud_colorB);
-	if(cloud_colorY->data.size()>30)
+	if(cloud_colorY.data.size()>30)
 		pubY.publish(*cloud_colorY);
-	if(cloud_colorK->data.size()>30)
+	if(cloud_colorK.data.size()>30)
 		pubK.publish(*cloud_colorK);
 
 }

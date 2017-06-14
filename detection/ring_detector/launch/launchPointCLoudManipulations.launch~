@@ -26,7 +26,7 @@
 		<remap from="marker" to="/ring_detector/circs"/>
 		<remap from="pose" to="/ring_detector/circ_pose"/>
 	</node> 
-	<node pkg="ring_detector" type="find_circ" name="find_circK"  args="black" output="screen">
+	<node pkg="ring_detector" type="find_circ" name="find_circK"  args="key" output="screen">
 		<remap from="input" to="pclK"/>
 		<remap from="marker" to="/ring_detector/circs"/>
 		<remap from="pose" to="/ring_detector/circ_pose"/>
