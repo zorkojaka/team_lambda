@@ -15,3 +15,11 @@ void spoznavanjeoseb()
 void pogovor(struct person per)
 
 void prisotnostoseb()
+
+string waitforanswer()
+
+string getanswer()
+
+void callbackodg(const std_msgs::stringConstPtr &odgovor)
+
+void bringring(int idkroga)

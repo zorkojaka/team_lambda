@@ -15,11 +15,16 @@
 
 
 //GLOBALNE SPREMENLJIVKE
+
 int poznamoring=0;
 int poznamocilinder=0;
 int zaporednimoski=1;
 int inforingspol=0;
 int infocilinderspol=0;
+
+int listening=0;
+string novabeseda; 
+
 person *manhead;
 person *womanhead;
 
@@ -250,9 +255,10 @@ int niclaid=0;
 void pogovor(int id){
 	struct person *kaz;
 	struct person *per;
-	int odg=1;
+	
 	
 	stringstream stream;
+	string odgovor;
 
 	
 	if(id>6){//mamo žensko
@@ -262,9 +268,11 @@ void pogovor(int id){
 	}
 	
 	//nastavmo per na pravo osebo
-	while(id!=per->id){
+	while(per->id!=id){
 		per=per->next;
 	}
+	//kdorkol to je je prisoten
+	per->prisotnost=1;
 	
 
 
@@ -273,19 +281,18 @@ void pogovor(int id){
 	if(per->spol==2){
 		system("rosrun sound_play say.py 'Hi. Are you a woman'");
 		kaz=womanhead;
-		if(odg==1){
+		
+		//pokazemo na pravo zensko
+		while(kaz->id !=per->id){
+				kaz=kaz->next;
+		}
+		
+		odgovor=getanswer();
+		if(odgovor == "yes"){
 			//POMENI DA GOVORI RESNICO
-			while(kaz->id !=per->id){
-				kaz=kaz->next;
-			}
 			kaz->truth=1;
-			kaz->prisotnost=1;
 		}else{//LAŽE
-			while(kaz->id !=per->id){
-				kaz=kaz->next;
-			}
 			kaz->truth=-1;
-			kaz->prisotnost=1;
 		}
 	//KONEC POGOVORA Z ŽENSKO	
 	}else if(per->spol==1){
@@ -295,14 +302,13 @@ void pogovor(int id){
 		while(kaz->id!=per->id){
 			kaz=kaz->next;
 		}
-		kaz->prisotnost=1;
-
 		//pogovor s prvim moškim
 		if(zaporednimoski==1){
 			zaporednimoski++;
 			system("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
-			//odg="yes";//yes
-			if(odg==1){
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
 				//woman cant have info about magic rings
 				kaz=womanhead->next;
 				inforingspol=1;
@@ -321,7 +327,9 @@ void pogovor(int id){
 			}
 			//2. VPRAŠANJE
 			system("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
-			if(odg==1){
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
 				//woman cant have info about location
 				kaz=womanhead->next;
 				infocilinderspol=1;
@@ -358,7 +366,9 @@ void pogovor(int id){
 			
 			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 			system(stream.str().c_str());
-			if(odg==1){
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
 				kaz->inforing=1; 
 			}else{
 				kaz->inforing=-1;		
@@ -372,7 +382,8 @@ void pogovor(int id){
 			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 			system(stream.str().c_str());
 			
-			if(odg==1){
+			odgovor=getanswer();
+			if(odgovor == "yes"){
 				kaz->inforing=1; 
 			}else{
 				kaz->inforing=-1;		
@@ -399,7 +410,9 @@ void pogovor(int id){
 					//1.VPRAŠANJE
 					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 					system(stream.str().c_str());
-					if(odg==1){
+					
+					odgovor=getanswer();
+					if(odgovor == "yes"){
 						kaz->inforing=1; 
 					}else{
 						kaz->inforing=-1;		
@@ -413,7 +426,9 @@ void pogovor(int id){
 				if(kaz!=NULL){
 					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 					system(stream.str().c_str());
-					if(odg==1){
+					
+					odgovor=getanswer();
+					if(odgovor == "yes"){
 						kaz->inforing=1; 
 					}else{
 						kaz->inforing=-1;		
@@ -439,7 +454,9 @@ void pogovor(int id){
 			if(kaz!=NULL){
 				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 				system(stream.str().c_str());
-				if(odg==1){
+				
+				odgovor=getanswer();
+				if(odgovor == "yes"){
 					kaz->infocilinder=1; 
 				}else{
 					kaz->infocilinder=-1;		
@@ -455,7 +472,9 @@ void pogovor(int id){
 				
 				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 				system(stream.str().c_str());
-				if(odg==1){
+				
+				odgovor=getanswer();
+				if(odgovor == "yes"){
 					kaz->infocilinder=1; 
 				}else{
 					kaz->infocilinder=-1;		
@@ -530,9 +549,100 @@ void prisotnostoseb(){
 	}
 }
 
+//po funkciji je odgovor v stream novabeseda
+string waitforanswer(){
+	// preberemo odgovor z listenerjem in ga shranimo v stream
+	listening=1;
+	//zacnemo poslušat in počakamo da slišmo
+	while(listening!=0){
+		//!!!!!!!!!!!!!!!DANGER!!!!!!!!!!!!!!!!!!!!!!!!
+		ros::Duration(0.5).sleep();
+		ros::spin();
+	}
+	return novabeseda;
+}
+
+string getanswer(){
+	stringstream stream;
+	string odgovor;
+	string potrditev;
+	
+	//v odgovor shranmo odgovor
+	odgovor=waitforanswer();
+	
+	
+	//preverimo če smo pravilno recognizali odgovor
+	stream<<"rosrun sound_play say.py "<<"'is "<<odgovor.str().c_str()<<" correct?'";
+	system(stream.str().c_str());
+	
+	// preberemo odgovor z listenerjem in ga shranimo v stream
+	potrditev=waitforanswer();
+	
+	if(potrditev=="yes"){
+		//če potrdimo vrnemo pravi odgovor
+		if(odgovor=="bring green ring"){
+			//prinesemo zelen ring
+			bringring(1);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring red ring"){
+			//prinesemo rdeč ring
+			bringring(2);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring blue ring"){
+			//prinesemo moder ring
+			bringring(3);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring black ring"){
+			//prinesemo črn ring
+			bringring(4);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}
+		
+		//normalen odgovor = podatki, če ne rabmo prnest ringa
+		return odgovor;
+	}else{
+		//če nismo uredu prepoznali še enkat zaženemo
+		return getanswer();
+	}
+	
+	
+}
+
+void callbackodg(const std_msgs::stringConstPtr &odgovor){
+	//ko poslušamo in smo nekaj rekli sprejme besedo.
+	if(listening==1){
+		novabeseda=odgovor;
+		listening=0;
+	}
+	//drugače ignorira
+}
+
+void bringring(int idkrogra){
+	switch(idkroga){
+		case 1://green ring
+				break;
+		case 2://red ring 
+				break;
+		case 3: //blue ring
+				break;
+		case 4: //black ring
+				break;
+		default: //err
+				break;
+		
+	}
+	
+}
 
 /*
 MAIN
+
+ // Create a ROS subscriber for the input point cloud
+  ros::Subscriber sub = nh.subscribe ("recognizer/output", 1, callbackodg);
 
 spoznavanjeoseb();
 //manhead->Harry->Peter->Elvis->Forrest->Tesla->Albert
