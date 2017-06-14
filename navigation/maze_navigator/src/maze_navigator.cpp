@@ -19,6 +19,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PointStamped.h>
+
 
 #include <sensor_msgs/PointCloud.h>
 
@@ -50,6 +52,8 @@ ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
 MObject maze_objects;     // all detected objects in the maze
 
+RobotPose ring_pose;
+
 // Schedule
 const int GOAL_SUCCESS = 1;
 const int GOAL_IN_PROGRESS = 2;
@@ -66,7 +70,6 @@ char *west_east_layer_path;
 
 // logic
 
-
 // map callbacks
 void simplemapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
@@ -81,6 +84,10 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 
 void facePositionCallback(const geometry_msgs::PoseArray::ConstPtr& msg){
     maze_objects.facePositionCallback(msg);
+}
+
+void ringPositionCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+    
 }
 
 
@@ -345,6 +352,7 @@ void testLogic(){
     printWomenHead();
 }
 
+
 /*
     Main planning node.
 
@@ -373,11 +381,7 @@ int main(int argc, char **argv)
 
     // maze map
     costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
-<<<<<<< HEAD
 //    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
-=======
-   // costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
->>>>>>> abc30b832497498e149d899be81d63a3bc9ccef5
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
 
  //   face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
@@ -426,6 +430,20 @@ int main(int argc, char **argv)
             ros::spinOnce();
             continue;
         }
+
+        // ring picking
+        tf::Vector3 straight_vec(ring_pose.wx_ - robot_pose.wx_, ring_pose.wy_ - robot_pose.wy_, 0.0);
+        tf::Vector3 curr_vec(robot_pose.rot_.x(), robot_pose.rot_.y(), 0.0);
+
+
+        curr_vec.normalize();
+        straight_vec.normalize();
+        ROS_INFO("%lf", (curr_vec.x() + curr_vec.y() + curr_vec.z()));
+
+        
+
+        // what is my rotation?
+
 
         /*if (goalInExec())
         {
