@@ -99,7 +99,7 @@ void callback(const pcl::PCLPointCloud2ConstPtr &cloud_blob)
 	double zLoc = (double)-coefficients->values[1] + 0.3;
 	//if(thisNode == 3)
 	//	printf("%s numInliers:%d\n", namespaces[thisNode], inliers->indices.size());
-	if(zLoc<0.45 || zLoc>0.65)
+	if(zLoc<0.55 || zLoc>0.7)
 		return;
 	printf("CIRC %s Center: %f, %f, %f\n", namespaces[thisNode], xLoc, yLoc, zLoc);
 
