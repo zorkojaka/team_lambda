@@ -36,6 +36,8 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 #include <maze_navigator/costmap.h>
 #include <maze_navigator/visualizer.h>
 #include <maze_navigator/mobject.h>
+#include <maze_navigator/logic.h>
+
 
 #define mp make_pair
 #define pb push_back
@@ -317,7 +319,7 @@ int main(int argc, char **argv)
     ros::Subscriber costmap_sub;
     ros::Subscriber simplemap_sub;
     ros::Subscriber face_sub;
-
+    ros::Subscriber speech_sub;
 
     // publishers
     ros::Publisher goal_pub;
@@ -328,6 +330,7 @@ int main(int argc, char **argv)
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
 
     face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
+    speech_sub = n.subscribe ("/recognizer/output", 1, &callbackodg);
 
 
     // frame transformer
@@ -350,7 +353,35 @@ int main(int argc, char **argv)
     RobotPose r_goal;
     RobotPose r_start;
     RobotPose t_pos;
-       
+
+
+    // logic init
+    spoznavanjeoseb();
+    pogovor(1);
+    printMenHead();
+    printWomenHead(); 
+    pogovor(2);
+     
+    printMenHead();
+    printWomenHead();
+
+    pogovor(3); 
+    printMenHead();
+    printWomenHead();
+    
+
+    pogovor(7);
+    printMenHead();
+    printWomenHead();
+ 
+    pogovor(8);
+    printMenHead();
+    printWomenHead();
+ 
+    pogovor(9);
+    printMenHead();
+    printWomenHead();
+
     // main loop
     ROS_INFO("Starting main loop...");
     while (ros::ok())
@@ -369,7 +400,7 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (goalInExec())
+        /*if (goalInExec())
         {
             int state = checkGoalState(ac);
             if(state == GOAL_SUCCESS){
@@ -385,7 +416,7 @@ int main(int argc, char **argv)
         }
 
         visualizeMultipleLayers(vis_pub, expl_planner.expl_map_, costmap);
-        
+        */
         waitKey(100);
         ros::spinOnce();
     }

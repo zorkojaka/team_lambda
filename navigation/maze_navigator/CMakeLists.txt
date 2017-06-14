@@ -21,7 +21,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_library(maze_exploration src/costmap.cpp src/expl_map.cpp src/expl_planner.cpp 
-  src/robot_pose.cpp src/visualizer.cpp src/mobject.cpp)
+  src/robot_pose.cpp src/visualizer.cpp src/mobject.cpp src/logic.cpp)
 
 
 add_executable(maze_navigator src/maze_navigator.cpp)

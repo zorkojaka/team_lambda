@@ -11,5 +11,6 @@
     $(arg north_south_layer) $(arg south_north_layer) $(arg east_west_layer) $(arg west_east_layer)"
     output="screen">
     </node>
+    <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
 
 </launch>

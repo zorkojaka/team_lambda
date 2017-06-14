@@ -186,6 +186,7 @@ string returnName(int id)
 	}
 }
 
+
 //Print podanega linked lista, podamo manhead/womanhead napiše vse podatke
 void printlist(person *head)
 {
@@ -196,6 +197,14 @@ void printlist(person *head)
 		printf("Oseba:%d, spol: %d, starost: %d, visina;%d, inforing: %d, infocilinder: %d, truth: %d, prisotnost: %d\n", kaz->id, kaz->spol, kaz->starost, kaz->visina, kaz->inforing, kaz->infocilinder, kaz->truth, kaz->prisotnost);
 		fflush(stdout);
 	}
+}
+
+void printWomenHead(){
+	printlist(womanhead);
+}
+ 
+void printMenHead(){
+	printlist(manhead);
 }
 
 // preveri če že vemo kdo ve kje je ring vrne ID, če ne vemo vrne 0
@@ -309,10 +318,12 @@ string waitforanswer(){
 	// preberemo odgovor z listenerjem in ga shranimo v stream
 	listening=1;
 	//zacnemo poslušat in počakamo da slišmo
+	ROS_INFO("Waiting for answer");
 	while(listening!=0){
+	
 		//!!!!!!!!!!!!!!!DANGER!!!!!!!!!!!!!!!!!!!!!!!!
-		ros::Duration(0.5).sleep();
-		ros::spin();
+	//	ros::Duration(0.5).sleep();
+		ros::spinOnce();
 	}
 	return novabeseda;
 }
@@ -709,8 +720,11 @@ void prisotnostoseb(){
 
 void callbackodg(const std_msgs::StringConstPtr &odgovor){
 	//ko poslušamo in smo nekaj rekli sprejme besedo.
+	ROS_INFO("Callback called %d", listening);
 	if(listening==1){
+		ROS_INFO("Listening -> 0");
 		novabeseda=odgovor->data;
+		ROS_INFO("Odgovor: %s", novabeseda.c_str());
 		listening=0;
 	}
 	//drugače ignorira
