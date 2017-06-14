@@ -20,8 +20,6 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include <geometry_msgs/PoseArray.h>
 
-
-
 #include <sensor_msgs/PointCloud.h>
 
 #include <visualization_msgs/Marker.h>
@@ -50,7 +48,12 @@ ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
 MObject maze_objects;     // all detected objects in the maze
 
-bool goal_in_progress;
+// Schedule
+const int GOAL_SUCCESS = 1;
+const int GOAL_IN_PROGRESS = 2;
+deque< pair<RobotPose, int> > exec_goal;
+
+const int EXPLORATION_GOAL = 0;
 
 // layer paths
 char *simple_layer_path;
@@ -112,14 +115,12 @@ void sendGoal(MoveBaseClient &ac, RobotPose &r_goal)
              goal.target_pose.pose.orientation.w);
 
     ac.sendGoal(goal);
-
-    goal_in_progress = true;
 }
 
 /*
     Checks state of currently executing goal.
 */
-void checkGoalState(MoveBaseClient &ac)
+int checkGoalState(MoveBaseClient &ac)
 {
     if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
@@ -131,14 +132,10 @@ void checkGoalState(MoveBaseClient &ac)
                  robot_pose.rot_quat_.y(),
                  robot_pose.rot_quat_.z(),
                  robot_pose.rot_quat_.w());
-
-        expl_planner.goalReachedCb(robot_pose, costmap);
-        goal_in_progress = false;
+        
+        return GOAL_SUCCESS;
     }
-    else
-    {
-        //   ROS_INFO("GOAL IN PROGRESS...");
-    }
+    return GOAL_IN_PROGRESS;
 }
 
 /*
@@ -245,6 +242,64 @@ bool readArgs(int argc, char **argv)
 }
 
 /*
+    
+*/
+bool scheduleNewExplorationGoal(MoveBaseClient &ac, RobotPose &r_goal, ros::Publisher &vis_pub){
+    bool goal_found = false;
+    r_goal = expl_planner.getNextGoal(robot_pose, costmap, goal_found);
+
+    visualizeSinglePoint(vis_pub, r_goal);
+
+    if (!goal_found)
+        return false;
+
+    exec_goal.push_back(mp(r_goal,0));
+    sendGoal(ac, r_goal);
+    return true;
+}
+
+/*
+    Schedule new approach.
+*/
+bool scheduleApproachGoal(MoveBaseClient &ac, RobotPose &r_goal, ros::Publisher &vis_pub){
+    pair<double,double> pos = maze_objects.getLastFacePos();
+    RobotPose t_pos = RobotPose(pos.first, pos.second, costmap);
+    
+    bool goal_found = false;
+    r_goal = expl_planner.getApproachGoal(robot_pose, t_pos, costmap, goal_found);
+    visualizeSinglePoint(vis_pub, r_goal);
+
+    if (!goal_found)
+        return false;
+    
+    exec_goal.push_back(mp(r_goal,1));
+    sendGoal(ac, r_goal);
+    return true;
+}
+
+void popGoal(){
+    if(exec_goal.size() == 0)
+        return;
+
+    pair<RobotPose, int> goal = exec_goal.front();    
+    exec_goal.pop_front();
+
+    RobotPose g_pose = goal.first;
+    int goal_type = goal.second;
+
+    if(goal_type == EXPLORATION_GOAL){
+        ROS_INFO("CALLBACK...");
+        expl_planner.goalReachedCb(robot_pose, costmap);
+    }
+}
+
+bool goalInExec(){
+    return exec_goal.size() > 0;
+}
+
+
+
+/*
     Main planning node.
 
     args1: target_layer pgm file
@@ -295,9 +350,7 @@ int main(int argc, char **argv)
     RobotPose r_goal;
     RobotPose r_start;
     RobotPose t_pos;
-
-    goal_in_progress = false;
-
+       
     // main loop
     ROS_INFO("Starting main loop...");
     while (ros::ok())
@@ -316,44 +369,23 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if(maze_objects.hasNewFace()){
-            pair<double,double> pos = maze_objects.getLastFacePos();
-            t_pos = RobotPose(pos.first, pos.second, costmap);
-            ROS_INFO("FOUND NEW FACE!");
-
-            bool goal_found = false;
-            r_goal = expl_planner.getApproachGoal(robot_pose, t_pos, costmap, goal_found);
-
-            visualizeSinglePoint(vis_pub, r_goal);
-
-            if (!goal_found)
-            {
-                break;
-            }
-            ROS_INFO("Approaching!");
-            sendGoal(ac, r_goal);
-        }
-
-       /* if (goal_in_progress)
+        if (goalInExec())
         {
-            checkGoalState(ac);
+            int state = checkGoalState(ac);
+            if(state == GOAL_SUCCESS){
+                popGoal();
+            }
         }
         else
         {
-            bool goal_found = false;
-            r_goal = expl_planner.getNextGoal(robot_pose, costmap, goal_found);
-
-            visualizeSinglePoint(vis_pub, r_goal);
-
-            if (!goal_found)
-            {
-                break;
-            }
-            sendGoal(ac, r_goal);
+            if(maze_objects.hasNewFace())
+                scheduleApproachGoal(ac, r_goal, vis_pub);
+            else
+                scheduleNewExplorationGoal(ac, r_goal, vis_pub);
         }
 
         visualizeMultipleLayers(vis_pub, expl_planner.expl_map_, costmap);
-        */
+        
         waitKey(100);
         ros::spinOnce();
     }

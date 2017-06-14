@@ -95,6 +95,8 @@ void ExplPlanner::constructExplorationMap(const RobotPose &r_pos, Costmap &costm
 
 void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap &costmap, int layer_flag)
 {
+    int n_layer_cells = 0;
+
     ROS_INFO("Constructing layer %d", layer_flag);
     dq_.clear();
 
@@ -115,6 +117,7 @@ void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap &costmap, int l
         if (expl_map_.getLabel(y, x) & layer_flag)
             continue;
 
+        n_layer_cells++;
         expl_map_.setLabel(y, x, expl_map_.getLabel(y, x) | layer_flag);
 
         // 8 - connect
@@ -138,6 +141,8 @@ void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap &costmap, int l
             }
         }
     }
+
+    ROS_INFO("Layer has %d cells", n_layer_cells);
 }
 
 /*
@@ -154,6 +159,15 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
     int startY = r_pos.y_;
     int startX = r_pos.x_;
 
+    /*
+        If robot falls out of "comfort zone" bring it back as soon as possible.
+    */
+    if (!expl_map_.isRobotReachable(startY, startX)) // only reachable cells
+    {
+        ROS_INFO("Robot is out of map range - rescue\n");
+        return findClosestReachableCell(r_pos, costmap, goal_found);
+    }
+
     // start new search
     dq_.pb(mp(r_pos.y_, r_pos.x_));
     while (!dq_.empty())
@@ -166,8 +180,9 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
 
         if (!expl_map_.isRobotReachable(y, x)) // only reachable cells
         {
-            ROS_INFO("Robot is out of map range!\n");
+            ROS_ERROR("Robot is out of map range!\n");
         }
+        
         if (expl_map_.isVisited(y, x))
             continue;
         expl_map_.markVisited(y, x);
@@ -195,8 +210,9 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
                 t_cells_new.pb(t_cells_visible[i]);
             }
 
-            if (t_cells_new.size() > 0)
+            if (t_cells_new.size() > 10)
             {
+                ROS_INFO("New goal %d %d %d with %d cells", y, x, angle_it, (int)t_cells_new.size() );
                 goal_found = true;
                 expl_used_goals_[y][x][angle_it] = true; // potential place for mistakes
                 r_goal = RobotPose(y, x, curr_rot, angle, costmap);
@@ -232,6 +248,61 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
 
     goal_found = false;
     ROS_WARN("Planner: NO GOAL FOUND\n");
+    return r_pos;
+}
+
+
+/*
+    Finds closest cell from LAYER_ROBOT_REACHABLE.
+*/
+RobotPose ExplPlanner::findClosestReachableCell(const RobotPose &r_pos, Costmap &costmap, 
+    bool &goal_found){
+    
+    RobotPose r_goal;
+
+    dq_.clear();
+    expl_map_.clearVisited();
+
+    dq_.pb(mp(r_pos.y_, r_pos.x_));
+    while (!dq_.empty())
+    {
+        pair<int, int> top = dq_.front();
+        dq_.pop_front();
+
+        int y = top.first;
+        int x = top.second;
+
+        if (expl_map_.isRobotReachable(y, x))
+        {
+            r_goal = RobotPose(y, x, costmap);
+
+            dq_.clear();
+            goal_found = true;
+            return r_goal;
+        }
+
+        if (expl_map_.isVisited(y, x))
+            continue;
+        expl_map_.markVisited(y, x);
+
+        // 8 - connect
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int ay = y + dy;
+                int ax = x + dx;
+
+                if (!costmap.inBounds(ay, ax))
+                    continue;
+                if (expl_map_.isVisited(ay, ax))
+                    continue;
+                dq_.pb(mp(ay, ax));
+            }
+        }
+    }
+
+    goal_found = false;
     return r_pos;
 }
 

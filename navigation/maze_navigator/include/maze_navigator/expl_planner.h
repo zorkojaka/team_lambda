@@ -50,6 +50,7 @@ class ExplPlanner
     // callbacks
     RobotPose getNextGoal(const RobotPose &r_pos, Costmap &costmap, bool &goal_found);
     RobotPose getApproachGoal(const RobotPose &r_pos, const RobotPose &goalCell, Costmap &costmap, bool &goal_found);
+    RobotPose findClosestReachableCell(const RobotPose &r_pos, Costmap &costmap, bool &goal_found);
     
     void goalReachedCb(const RobotPose &r_pos, Costmap &costmap);
 
