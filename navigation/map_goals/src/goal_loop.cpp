@@ -33,6 +33,8 @@ int inforingspol=0;
 int infocilinderspol=0;
 
 
+
+
 struct person{
 int id;
 int spol;
@@ -52,7 +54,23 @@ person *next;
 person *manhead;
 person *womanhead;
 
-
+string returnName(int id){
+switch(id){
+case 1: return "Harry";
+case 2: return "Peter";
+case 3: return "Elvis";
+case 4: return "Forrest";
+case 5: return "Tesla";
+case 6: return "Albert";
+case 7: return "Ilka";
+case 8: return "Adele";
+case 9: return "Scarlett";
+case 10: return "Lindsey";
+case 11: return "Tina";
+case 12: return "Ellen";
+default: return "Nevem";		
+}
+}
 
 void addperson(int id, int spol, int starost, int visina){	
 	person *kaz;
@@ -193,7 +211,7 @@ int niclaid=0;
 
 //incializacija vseh oseb v lista man in woman
 void spoznavanjeoseb(){
-
+	
 	//incializacija glav listov
 	manhead = new person;
 	manhead->id=0;
@@ -241,6 +259,9 @@ void spoznavanjeoseb(){
 void pogovor(struct person per){	
 	struct person *kaz;	
 	int odg=1;
+	
+	stringstream stream;
+
 	
 	//pogovor ženske
 	if(per.spol==2){
@@ -327,7 +348,10 @@ void pogovor(struct person per){
 			}//damo na prvega, za kerga ne vemo a ve al ne.
 
 			//1.VPRAŠANJE
-			system("rosrun sound_play say.py 'does USE NAME know where is ring ?'");
+			
+			
+			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(per.id)<<"know where is ring?'";
+			system(stream.str().c_str());
 			if(odg==1){
 				kaz->inforing=1; 
 			}else{
@@ -418,6 +442,7 @@ void pogovor(struct person per){
 				
 			if(kaz!=NULL){
 			//TREBA SESTAVT STRING UKAZ + IME +...
+				
 				system("rosrun sound_play say.py 'does USE NAME know which location is right ?'");
 				if(odg==1){
 					kaz->infocilinder=1; 
@@ -448,11 +473,6 @@ void pogovor(struct person per){
 	
 	
 }
-
-
-
-
-
 
 
 int main(int argc, char** argv) {
@@ -529,11 +549,7 @@ int main(int argc, char** argv) {
 		}
 		*/
 
-
 		ros::spinOnce();
-
-	
-	
     return 0;
 
 }

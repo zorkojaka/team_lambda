@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include <maze_navigator/geom_util.h>
 #include <maze_navigator/robot_pose.h>
 #include <maze_navigator/expl_planner.h>
 
@@ -81,7 +80,7 @@ void ExplPlanner::init(const RobotPose &r_pos, Costmap &costmap)
     init_ = true;
 }
 
-void ExplPlanner::addLayer(std::vector<std::vector<int>> layer_map, int height, int width,
+void ExplPlanner::addLayer(std::vector<std::vector<int> > layer_map, int height, int width,
                            int layer_flag)
 {
     expl_map_.addLayer(layer_map, height, width, layer_flag);
@@ -239,7 +238,7 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
 /*
     Get object approach goal.
 */
-RobotPose getApproachGoal(const RobotPose &r_pos, const RobotPose &goal_cell,
+RobotPose ExplPlanner::getApproachGoal(const RobotPose &r_pos, const RobotPose &goal_cell,
                           Costmap &costmap, bool &goal_found)
 {
     RobotPose r_goal;
@@ -269,8 +268,8 @@ RobotPose getApproachGoal(const RobotPose &r_pos, const RobotPose &goal_cell,
             costmap.fromPixel(y, x, wy, wx);
 
             tf::Vector3 rot_vec(goal_cell.wx_ - wx, goal_cell.wy_ - wy, 0);
-            double angle_2d = rotVecToAngle(rot_vec);
-
+            //double angle_2d = rotVecToAngle(rot_vec);
+            double angle_2d = 0.0;
             r_goal = RobotPose(y, x, rot_vec, angle_2d, costmap);
 
             dq_.clear();

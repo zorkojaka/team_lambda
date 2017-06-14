@@ -44,7 +44,7 @@ using namespace cv;
 Costmap costmap;          // maze costmap
 ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
-MObject maze_objects;     // all detected objects in the maze
+//MObject maze_objects;     // all detected objects in the maze
 
 bool goal_in_progress;
 
@@ -56,7 +56,6 @@ char *east_west_layer_path;
 char *west_east_layer_path;
 
 // logic
-
 
 
 // map callbacks
@@ -169,7 +168,7 @@ bool loadAndAddLayer(char *layer_path, int layer_flag)
         return false;
     }
 
-    vector<vector<int>> l_mat;
+    vector<vector<int> > l_mat;
     for (int y = 0; y < image.rows; y++)
     {
         l_mat.pb(vector<int>());
