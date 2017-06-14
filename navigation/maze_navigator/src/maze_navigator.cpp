@@ -18,6 +18,9 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include <geometry_msgs/PoseArray.h>
+
+
 
 #include <sensor_msgs/PointCloud.h>
 
@@ -34,6 +37,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 #include <maze_navigator/expl_planner.h>
 #include <maze_navigator/costmap.h>
 #include <maze_navigator/visualizer.h>
+#include <maze_navigator/mobject.h>
 
 #define mp make_pair
 #define pb push_back
@@ -44,7 +48,7 @@ using namespace cv;
 Costmap costmap;          // maze costmap
 ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
-//MObject maze_objects;     // all detected objects in the maze
+MObject maze_objects;     // all detected objects in the maze
 
 bool goal_in_progress;
 
@@ -69,6 +73,12 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
     ROS_INFO("COSTMAP COSTMAP REVEICEV");
     costmap.store(msg_map);
 }
+
+// detection callbacks
+void facePositionCallback(const geometry_msgs::PoseArray::ConstPtr& msg){
+    maze_objects.facePositionCallback(msg);
+}
+
 
 /*  
     Sends goal to move_base
@@ -251,6 +261,8 @@ int main(int argc, char **argv)
     // subscribers
     ros::Subscriber costmap_sub;
     ros::Subscriber simplemap_sub;
+    ros::Subscriber face_sub;
+
 
     // publishers
     ros::Publisher goal_pub;
@@ -259,6 +271,9 @@ int main(int argc, char **argv)
     // maze map
     costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
+
+    face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
+
 
     // frame transformer
     tf::TransformListener listener;
@@ -300,7 +315,7 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (goal_in_progress)
+       /* if (goal_in_progress)
         {
             checkGoalState(ac);
         }
@@ -319,7 +334,7 @@ int main(int argc, char **argv)
         }
 
         visualizeMultipleLayers(vis_pub, expl_planner.expl_map_, costmap);
-
+        */
         waitKey(100);
         ros::spinOnce();
     }

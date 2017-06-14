@@ -1,5 +1,8 @@
 <launch>
-	<arg name="image_topic" value="/camera/rgb/image_color" />
+	<!-- <arg name="image_topic" value="/camera/rgb/image_color" /> -->
+  
+  <arg name="image_topic" value="/camera/rgb/image_raw" />
+  
   <arg name="detections_topic" default="/dlib_detector/detections"/>
   <arg name="toggle_topic" default="/dlib_detector/toggle"/>
 
