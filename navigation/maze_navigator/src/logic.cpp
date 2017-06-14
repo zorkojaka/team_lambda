@@ -1,17 +1,37 @@
-
-
 #include <maze_navigator/logic.h>
+
+#include "ros/ros.h"
+
+#include <nav_msgs/GetMap.h>
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+#include <visualization_msgs/Marker.h>
+#include <time.h>
+#include <std_msgs/String.h>
+#include <cstring>
+
+using namespace std;
 
 
 
 //GLOBALNE SPREMENLJIVKE
-int poznamoring = 0;
-int poznamocilinder = 0;
-int zaporednimoski = 1;
-int inforingspol = 0;
-int infocilinderspol = 0;
-person *manhead;
-person *womanhead;
+
+
+int poznamoring=0;
+int poznamocilinder=0;
+int zaporednimoski=1;
+int inforingspol=0;
+int infocilinderspol=0;
+
+int listening=0;
+string novabeseda; 
+
+
+
 
 //Struct person
 struct person
@@ -27,6 +47,9 @@ struct person
 	int prisotnost; // 0 nedefiniran 1 prisoten -1 neprisoten
 	person *next;
 };
+
+person *manhead;
+person *womanhead;
 
 //ustvarimo novo osebo in jo dodamo na pravi seznam glede na spol
 //manhead ali womanhead.
@@ -264,63 +287,161 @@ int infocilindercheck(person *head)
 	return 0;
 }
 
+void bringring(int idkroga){
+	switch(idkroga){
+		case 1://green ring
+				break;
+		case 2://red ring 
+				break;
+		case 3: //blue ring
+				break;
+		case 4: //black ring
+				break;
+		default: //err
+				break;
+		
+	}
+	
+}
+
+//po funkciji je odgovor v stream novabeseda
+string waitforanswer(){
+	// preberemo odgovor z listenerjem in ga shranimo v stream
+	listening=1;
+	//zacnemo poslušat in počakamo da slišmo
+	while(listening!=0){
+		//!!!!!!!!!!!!!!!DANGER!!!!!!!!!!!!!!!!!!!!!!!!
+		ros::Duration(0.5).sleep();
+		ros::spin();
+	}
+	return novabeseda;
+}
+
+string getanswer(){
+	stringstream stream;
+	string odgovor;
+	string potrditev;
+	
+	//v odgovor shranmo odgovor
+	odgovor=waitforanswer();
+	
+	
+	//preverimo če smo pravilno recognizali odgovor
+	stream<<"rosrun sound_play say.py 'is "<<odgovor<<" correct?'";
+	system(stream.str().c_str());
+	
+	// preberemo odgovor z listenerjem in ga shranimo v stream
+	potrditev=waitforanswer();
+	
+	if(potrditev=="yes"){
+		//če potrdimo vrnemo pravi odgovor
+		if(odgovor=="bring green ring"){
+			//prinesemo zelen ring
+			bringring(1);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring red ring"){
+			//prinesemo rdeč ring
+			bringring(2);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring blue ring"){
+			//prinesemo moder ring
+			bringring(3);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}else if(odgovor=="bring black ring"){
+			//prinesemo črn ring
+			bringring(4);
+			//še enkat zaženemo funkcijo, da dobimo željen odg.
+			return getanswer();
+		}
+		
+		//normalen odgovor = podatki, če ne rabmo prnest ringa
+		return odgovor;
+	}else{
+		//če nismo uredu prepoznali še enkat zaženemo
+		return getanswer();
+	}
+	
+	
+}
+
+
+
 /*POGOVOR:
 - z žensko: vprašamo če je ženska -> rensica/laž
 - 1. moški: vprašamo če ima info kje je ring/cilinder moški
 - 2. moški: za ring preverja po imenu 
 - nadaljni moški: če vemo za ring preverjamo za cilinder*/
-void pogovor(struct person per)
-{
+
+void pogovor(int id){
 	struct person *kaz;
-	int odg = 1;
+	struct person *per;
+
+	int systemout=0;
+	
+	
 
 	stringstream stream;
+	string odgovor;
+
+	
+	if(id>6){//mamo žensko
+		per=womanhead->next;
+	}else{//mamo moškega
+		per=manhead->next;
+	}
+	
+	//nastavmo per na pravo osebo
+	while(per->id!=id){
+		per=per->next;
+	}
+	//kdorkol to je je prisoten
+	per->prisotnost=1;
+	
+
 
 	//pogovor ženske
-	if (per.spol == 2)
-	{
+
+	if(per->spol==2){
 		system("rosrun sound_play say.py 'Hi. Are you a woman'");
-		kaz = womanhead;
-		if (odg == 1)
-		{
+		kaz=womanhead;
+		
+		//pokazemo na pravo zensko
+		while(kaz->id !=per->id){
+				kaz=kaz->next;
+		}
+		
+		odgovor=getanswer();
+		if(odgovor == "yes"){
 			//POMENI DA GOVORI RESNICO
-			while (kaz->id != per.id)
-			{
-				kaz = kaz->next;
-			}
-			kaz->truth = 1;
-			kaz->prisotnost = 1;
+			kaz->truth=1;
+		}else{//LAŽE
+			kaz->truth=-1;
 		}
-		else
-		{ //LAŽE
-			while (kaz->id != per.id)
-			{
-				kaz = kaz->next;
-			}
-			kaz->truth = -1;
-			kaz->prisotnost = 1;
-		}
-		//KONEC POGOVORA Z ŽENSKO
-	}
-	else if (per.spol == 1)
-	{
+	//KONEC POGOVORA Z ŽENSKO	
+	}else if(per->spol==1){
+
 		//POGOVOR Z MOŠKIM
 		kaz = manhead->next;
 		//kažemo na pravega
-		while (kaz->id != per.id)
-		{
-			kaz = kaz->next;
+    
+
+		while(kaz->id!=per->id){
+			kaz=kaz->next;
 		}
-		kaz->prisotnost = 1;
 
 		//pogovor s prvim moškim
 		if (zaporednimoski == 1)
 		{
 			zaporednimoski++;
-			system("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
-			//odg="yes";//yes
-			if (odg == 1)
-			{
+			systemout=system("rosrun sound_play say.py 'Is the person who knows which ring is magical a man?'");
+
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
+
 				//woman cant have info about magic rings
 				kaz = womanhead->next;
 				inforingspol = 1;
@@ -342,9 +463,12 @@ void pogovor(struct person per)
 				}
 			}
 			//2. VPRAŠANJE
-			system("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
-			if (odg == 1)
-			{
+			systemout = system("rosrun sound_play say.py 'Is the person who knows which location is right a man?'");
+
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
+
 				//woman cant have info about location
 				kaz = womanhead->next;
 				infocilinderspol = 1;
@@ -386,17 +510,15 @@ void pogovor(struct person per)
 			} //damo na prvega, za kerga ne vemo a ve al ne.
 
 			//1.VPRAŠANJE
-
-			stream << "rosrun sound_play say.py "
-				   << "'does" << returnName(per.id) << "know where is ring?'";
-			system(stream.str().c_str());
-			if (odg == 1)
-			{
-				kaz->inforing = 1;
-			}
-			else
-			{
-				kaz->inforing = -1;
+		
+			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+			systemout = system(stream.str().c_str());
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
+				kaz->inforing=1; 
+			}else{
+				kaz->inforing=-1;		
 			}
 
 			//2. VPRAŠANJE
@@ -404,17 +526,16 @@ void pogovor(struct person per)
 			{
 				kaz = kaz->next;
 			}
-			stream << "rosrun sound_play say.py "
-				   << "'does" << returnName(per.id) << "know where is ring?'";
-			system(stream.str().c_str());
 
-			if (odg == 1)
-			{
-				kaz->inforing = 1;
-			}
-			else
-			{
-				kaz->inforing = -1;
+			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+			systemout = system(stream.str().c_str());
+			
+			odgovor=getanswer();
+			if(odgovor == "yes"){
+				kaz->inforing=1; 
+			}else{
+				kaz->inforing=-1;		
+
 			}
 		}
 		else if (zaporednimoski > 2)
@@ -427,9 +548,7 @@ void pogovor(struct person per)
 				if (inforingspol == 1)
 				{
 					kaz = manhead;
-				}
-				else
-				{
+				}else{
 					kaz = womanhead;
 				}
 
@@ -440,16 +559,16 @@ void pogovor(struct person per)
 				if (kaz != NULL)
 				{
 					//1.VPRAŠANJE
-					stream << "rosrun sound_play say.py "
-						   << "'does" << returnName(per.id) << "know where is ring?'";
+
+					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
 					system(stream.str().c_str());
-					if (odg == 1)
-					{
-						kaz->inforing = 1;
-					}
-					else
-					{
-						kaz->inforing = -1;
+					
+					odgovor=getanswer();
+					if(odgovor == "yes"){
+						kaz->inforing=1; 
+					}else{
+						kaz->inforing=-1;		
+
 					}
 				}
 
@@ -458,18 +577,17 @@ void pogovor(struct person per)
 				{
 					kaz = kaz->next;
 				}
-				if (kaz != NULL)
-				{
-					stream << "rosrun sound_play say.py "
-						   << "'does" << returnName(per.id) << "know where is ring?'";
-					system(stream.str().c_str());
-					if (odg == 1)
-					{
-						kaz->inforing = 1;
-					}
-					else
-					{
-						kaz->inforing = -1;
+
+				if(kaz!=NULL){
+					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+					systemout = system(stream.str().c_str());
+					
+					odgovor=getanswer();
+					if(odgovor == "yes"){
+						kaz->inforing=1; 
+					}else{
+						kaz->inforing=-1;		
+
 					}
 				}
 
@@ -486,48 +604,35 @@ void pogovor(struct person per)
 				{
 					kaz = womanhead;
 				}
-			}
 
-			//1. VPRAŠANJE
-			while (kaz->inforing != 0 && kaz != NULL && kaz->prisotnost > -1)
-			{
-				kaz = kaz->next;
-			}
-
-			if (kaz != NULL)
-			{
-				stream << "rosrun sound_play say.py "
-					   << "'does" << returnName(per.id) << "know where is ring?'";
-				system(stream.str().c_str());
-				if (odg == 1)
-				{
-					kaz->infocilinder = 1;
-				}
-				else
-				{
-					kaz->infocilinder = -1;
+			}	
+			if(kaz!=NULL){
+				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+				systemout = system(stream.str().c_str());
+				
+				odgovor=getanswer();
+				if(odgovor == "yes"){
+					kaz->infocilinder=1; 
+				}else{
+					kaz->infocilinder=-1;		
 				}
 			}
 			//2.vprašanje
-			while (kaz->inforing != 0 && kaz != NULL && kaz->prisotnost > -1)
-			{
-				kaz = kaz->next;
+			while(kaz->inforing!=0 && kaz!=NULL && kaz-> prisotnost > -1){
+				kaz=kaz->next;
 			}
-
-			if (kaz != NULL)
-			{
-				//TREBA SESTAVT STRING UKAZ + IME +...
-
-				stream << "rosrun sound_play say.py "
-					   << "'does" << returnName(per.id) << "know where is ring?'";
-				system(stream.str().c_str());
-				if (odg == 1)
-				{
-					kaz->infocilinder = 1;
-				}
-				else
-				{
-					kaz->infocilinder = -1;
+				
+			if(kaz!=NULL){
+			//TREBA SESTAVT STRING UKAZ + IME +...
+				
+				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+				systemout = system(stream.str().c_str());
+				
+				odgovor=getanswer();
+				if(odgovor == "yes"){
+					kaz->infocilinder=1; 
+				}else{
+					kaz->infocilinder=-1;		
 				}
 			}
 			else
@@ -557,20 +662,85 @@ void pogovor(struct person per)
 	}
 }
 
+
+// preveri če smo že najdl dovolj moških ali žensk da druge izklučimo
+void prisotnostoseb(){
+	person *m=manhead->next;
+	person *w=womanhead->next;
+	
+	int stm=0;
+	int stw=0;
+	
+	//z zanko preštejemo koliko moških je prisotnih
+	while(m!=NULL){
+		if(m->prisotnost==1){
+			stm++;
+		}
+		m=m->next;
+	}
+		
+	//će že mamo 3 moške ostali odpadejo
+	if(stm>2){
+		while(m!=NULL){
+			if(m->prisotnost!=1){
+				m->prisotnost=-1;
+			}
+			m=m->next;
+		}
+	}
+	
+	//pteštejemo koliko žensk je prisotnih
+	while(w!=NULL){
+		if(w->prisotnost==1){
+			stw++;
+		}
+		w=w->next;
+	}
+	//če že mamo 3 ženske ostale odpadejo
+	if(stw>2){
+		while(w!=NULL){
+			if(w->prisotnost!=1){
+				w->prisotnost=-1;
+			}
+			w=w->next;
+		}
+	}
+}
+
+void callbackodg(const std_msgs::StringConstPtr &odgovor){
+	//ko poslušamo in smo nekaj rekli sprejme besedo.
+	if(listening==1){
+		novabeseda=odgovor->data;
+		listening=0;
+	}
+	//drugače ignorira
+}
+
 /*
 MAIN
+
+ // Create a ROS subscriber for the input point cloud
+  ros::Subscriber sub = nh.subscribe ("recognizer/output", 1, callbackodg);
 
 spoznavanjeoseb();
 //manhead->Harry->Peter->Elvis->Forrest->Tesla->Albert
 //womanhead->Ilka->Adele->Scarlet->Lindsay->Tina->Ellen	
 
-struct person *kaz;
-int id=getid(); //from stream 
-kaz= //nastavmo na osebo s pravim id, ki ga prepoznamo
-pogovor(*kaz);	
-...
+
+while(ne najdemo vseh ringov, cilindrov, obrazov){
+	go to next point
+	if(PREPOZNAMO OSEBO){ 
+		pogovor(getid());	//from listener
+		//zaženi da prevermo če smo jih že dost najdl da drug izklučmo
+		prisotnostoseb(); 
+	}
+}
 int ringID = inforingcheck(manhead);
 int cilinderID = inforingcheck(womanhead);
+
+if(ringID != 0 && cilinderID != 0){
+	vemo kar mormo, lahko gremo do oseb, ki vejo...
+}
 
 
 */
