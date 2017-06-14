@@ -78,8 +78,7 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
     ROS_INFO("COSTMAP COSTMAP REVEICEV");
     costmap.store(msg_map);
 }
-void costmapUpdatesCallback()
-// detection callbacks
+
 void facePositionCallback(const geometry_msgs::PoseArray::ConstPtr& msg){
     maze_objects.facePositionCallback(msg);
 }
@@ -302,15 +301,33 @@ bool goalInExec(){
 void testLogic(){
     // logic init
     spoznavanjeoseb();
+    
+
     pogovor(1);
+
+    prisotnostoseb();
+    int neki = gotinfo();
+    if(neki==1)ROS_INFO("SPREEEMNII!!");
+    
+    
     printMenHead();
     printWomenHead(); 
-    pogovor(2);
-     
+    
+    pogovor(2); 
+    
+        prisotnostoseb();
+    if(gotinfo()==1){
+        ROS_INFO("SPREEEMNII!!");
+    }
     printMenHead();
     printWomenHead();
 
     pogovor(3); 
+    
+        prisotnostoseb();
+    if(gotinfo()==1){
+        ROS_INFO("SPREEEMNII!!");
+    }
     printMenHead();
     printWomenHead();
     
@@ -356,11 +373,13 @@ int main(int argc, char **argv)
 
     // maze map
     costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
-    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
+//    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
 
-    face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
+ //   face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
     speech_sub = n.subscribe ("/recognizer/output", 1, &callbackodg);
+
+        testLogic();
 
 
     // frame transformer
@@ -370,6 +389,7 @@ int main(int argc, char **argv)
     // goal_pub = n.advertise<geometry_msgs::PoseStamped>("goal", 10);
     // vis_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
     vis_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+
 
     // goal sender
     MoveBaseClient ac("move_base", true);
@@ -383,6 +403,7 @@ int main(int argc, char **argv)
     RobotPose r_goal;
     RobotPose r_start;
     RobotPose t_pos;
+
 
     // main loop
     ROS_INFO("Starting main loop...");

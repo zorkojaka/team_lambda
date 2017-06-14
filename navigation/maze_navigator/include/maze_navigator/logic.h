@@ -8,6 +8,8 @@ void spoznavanjeoseb();
 void pogovor(int id);
 void printMenHead();
 void printWomenHead();
+int gotinfo();
+void prisotnostoseb();
 
 #endif
 
