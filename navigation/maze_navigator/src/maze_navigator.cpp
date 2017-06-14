@@ -294,6 +294,7 @@ int main(int argc, char **argv)
 
     RobotPose r_goal;
     RobotPose r_start;
+    RobotPose t_pos;
 
     goal_in_progress = false;
 
@@ -313,6 +314,24 @@ int main(int argc, char **argv)
             waitKey(100);
             ros::spinOnce();
             continue;
+        }
+
+        if(maze_objects.hasNewFace()){
+            pair<double,double> pos = maze_objects.getLastFacePos();
+            t_pos = RobotPose(pos.first, pos.second, costmap);
+            ROS_INFO("FOUND NEW FACE!");
+
+            bool goal_found = false;
+            r_goal = expl_planner.getApproachGoal(robot_pose, t_pos, costmap, goal_found);
+
+            visualizeSinglePoint(vis_pub, r_goal);
+
+            if (!goal_found)
+            {
+                break;
+            }
+            ROS_INFO("Approaching!");
+            sendGoal(ac, r_goal);
         }
 
        /* if (goal_in_progress)

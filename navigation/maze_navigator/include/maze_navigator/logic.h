@@ -1,4 +1,9 @@
-string returnName(int)
+#ifndef LOGIC_H
+#define LOGIC_H
+
+#include <string>
+
+std::string returnName(int );
 
 struct person
 
@@ -14,4 +19,4 @@ void spoznavanjeoseb()
 
 void pogovor(struct person per)
 
-
+#endif
