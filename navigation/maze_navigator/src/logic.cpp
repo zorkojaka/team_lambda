@@ -405,7 +405,7 @@ void pogovor(int id){
 	}
 	
 	//nastavmo per na pravo osebo
-	while(per->id!=id){
+	while(per->id != id){
 		per=per->next;
 	}
 	//kdorkol to je je prisoten
@@ -437,9 +437,7 @@ void pogovor(int id){
 		//POGOVOR Z MOŠKIM
 		kaz = manhead->next;
 		//kažemo na pravega
-    
-
-		while(kaz->id!=per->id){
+    	while(kaz->id!=per->id){
 			kaz=kaz->next;
 		}
 
@@ -502,54 +500,7 @@ void pogovor(int id){
 			}
 		}
 		//naprej je za drugega in tretjega moškega
-		else if (zaporednimoski == 2)
-		{
-			zaporednimoski++;
-			//drugi moski ugotovimo kdo ve za ring
-			if (inforingspol == 1)
-			{
-				kaz = manhead;
-			}
-			else
-			{
-				kaz = womanhead;
-			}
-			//kaz po zanki kaže na un spol ki to ve.
-			while (kaz->inforing != 0 && kaz != NULL && kaz->prisotnost > -1)
-			{
-				kaz = kaz->next;
-			} //damo na prvega, za kerga ne vemo a ve al ne.
-
-			//1.VPRAŠANJE
-		
-			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
-			systemout = system(stream.str().c_str());
-			
-			odgovor=getanswer();
-			if(odgovor == "yes"){
-				kaz->inforing=1; 
-			}else{
-				kaz->inforing=-1;		
-			}
-
-			//2. VPRAŠANJE
-			while (kaz->inforing != 0 && kaz != NULL && kaz->prisotnost > -1)
-			{
-				kaz = kaz->next;
-			}
-
-			stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
-			systemout = system(stream.str().c_str());
-			
-			odgovor=getanswer();
-			if(odgovor == "yes"){
-				kaz->inforing=1; 
-			}else{
-				kaz->inforing=-1;		
-
-			}
-		}
-		else if (zaporednimoski > 2)
+		else
 		{
 			zaporednimoski++;
 			//nastavmo kazalec na pravi spol
@@ -570,9 +521,9 @@ void pogovor(int id){
 				if (kaz != NULL)
 				{
 					//1.VPRAŠANJE
-
-					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
-					system(stream.str().c_str());
+					stream.str("");
+					stream<<"rosrun sound_play say.py 'does "<<returnName(kaz->id)<<" maybe know where is ring?'";
+					systemout = system(stream.str().c_str());
 					
 					odgovor=getanswer();
 					if(odgovor == "yes"){
@@ -590,7 +541,8 @@ void pogovor(int id){
 				}
 
 				if(kaz!=NULL){
-					stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+					stream.str("");
+					stream<<"rosrun sound_play say.py 'does "<<returnName(kaz->id)<<" know where is ring?'";
 					systemout = system(stream.str().c_str());
 					
 					odgovor=getanswer();
@@ -618,7 +570,8 @@ void pogovor(int id){
 
 			}	
 			if(kaz!=NULL){
-				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+				stream.str("");
+				stream<<"rosrun sound_play say.py 'does "<<returnName(kaz->id)<<" know where is ring?'";
 				systemout = system(stream.str().c_str());
 				
 				odgovor=getanswer();
@@ -635,8 +588,8 @@ void pogovor(int id){
 				
 			if(kaz!=NULL){
 			//TREBA SESTAVT STRING UKAZ + IME +...
-				
-				stream<<"rosrun sound_play say.py "<<"'does"<<returnName(kaz->id)<<"know where is ring?'";
+				stream.str("");
+				stream<<"rosrun sound_play say.py 'does "<<returnName(kaz->id)<<" know where is ring?'";
 				systemout = system(stream.str().c_str());
 				
 				odgovor=getanswer();
