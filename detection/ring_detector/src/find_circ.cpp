@@ -9,6 +9,10 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
+
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PointStamped.h>
 
@@ -29,6 +33,11 @@ int minNumInliers[] = {40, 30, 30,25, 40, 8};
 
 ros::Publisher rvizPub;
 ros::Publisher posePub;
+
+// frame transformer
+tf::TransformListener* listener;
+
+//tf::StampedTransform transform;
 
 int main(int argc, char **argv)
 {
@@ -55,6 +64,9 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "find_circ");
 	ros::NodeHandle nh;
 
+	listener = new tf::TransformListener();
+
+
 	// Create a ROS subscriber for the input point cloud
 	ros::Subscriber sub = nh.subscribe("input", 1, callback);
 
@@ -63,8 +75,11 @@ int main(int argc, char **argv)
 	posePub = nh.advertise<geometry_msgs::PointStamped>("pose", 1);
 
 	ros::Rate r(5);
+	
 	// Spin
-	ros::spin();
+	while(ros::ok()){
+		ros::spinOnce();
+	}
 }
 
 void callback(const pcl::PCLPointCloud2ConstPtr &cloud_blob)
@@ -114,25 +129,37 @@ void callback(const pcl::PCLPointCloud2ConstPtr &cloud_blob)
 	extract.filter(*cloud_outliers);
 
 	// Detected point publisher
-	geometry_msgs::PointStamped poseMsg;
-	poseMsg.header.frame_id = "/base_link";
-	poseMsg.header.stamp = ros::Time::now();
-	poseMsg.point.x = xLoc; //KOLIKO PRED NJIM
-	poseMsg.point.y = yLoc; //KOLIKO LEVO OD NJEGA
-	poseMsg.point.z = zLoc; //KOLIKO NAD NJIM
-	posePub.publish(poseMsg);
+	geometry_msgs::PointStamped poseBaseLink;
+	poseBaseLink.header.frame_id = "/base_link";
+	poseBaseLink.header.stamp = ros::Time(0);
+	poseBaseLink.point.x = xLoc; //KOLIKO PRED NJIM
+	poseBaseLink.point.y = yLoc; //KOLIKO LEVO OD NJEGA
+	poseBaseLink.point.z = zLoc; //KOLIKO NAD NJIM
+	
+	geometry_msgs::PointStamped poseMap;
+
+	// transform to /map frame
+	try{
+      listener->transformPoint("/map", poseBaseLink, poseMap);
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      return;
+    }
+
+	posePub.publish(poseMap);
 
 	// RViz visualization
 	visualization_msgs::Marker marker;
-	marker.header.frame_id = "/base_link";
+	marker.header.frame_id = "/map";
 	marker.header.stamp = ros::Time::now();
 	marker.ns = namespaces[thisNode];
 	marker.id = thisNode;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
-	marker.pose.position.x = xLoc; //KOLIKO PRED NJIM
-	marker.pose.position.y = yLoc; //KOLIKO LEVO OD NJEGA
-	marker.pose.position.z = zLoc; //KOLIKO NAD NJIM
+	marker.pose.position.x = poseMap.point.x; //KOLIKO PRED NJIM
+	marker.pose.position.y = poseMap.point.y; //KOLIKO LEVO OD NJEGA
+	marker.pose.position.z = poseMap.point.z; //KOLIKO NAD NJIM
 	marker.pose.orientation.x = 0.0;
 	marker.pose.orientation.y = 0.0;
 	marker.pose.orientation.z = 0.0;
@@ -150,7 +177,7 @@ void callback(const pcl::PCLPointCloud2ConstPtr &cloud_blob)
 /*
 	 Recognition on/off
 
-void toggleCallback(const std_msgs::Bool &toggle)
+	void toggleCallback(const std_msgs::Bool &toggle)
 {
 	active = toggle.data;
 }

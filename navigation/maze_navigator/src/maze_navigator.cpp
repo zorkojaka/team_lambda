@@ -78,8 +78,7 @@ void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
     ROS_INFO("COSTMAP COSTMAP REVEICEV");
     costmap.store(msg_map);
 }
-void costmapUpdatesCallback()
-// detection callbacks
+
 void facePositionCallback(const geometry_msgs::PoseArray::ConstPtr& msg){
     maze_objects.facePositionCallback(msg);
 }
@@ -356,7 +355,7 @@ int main(int argc, char **argv)
 
     // maze map
     costmap_sub = n.subscribe("/move_base/global_costmap/costmap", 10, &costmapCallback);
-    costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
+   // costmap_update_sub = n.subscribe("/move_base/global_costmap/costmap_updates", 10, &costmapUpdatesCallback);
     simplemap_sub = n.subscribe("/map", 10, &simplemapCallback);
 
     face_sub = n.subscribe("/face_centers", 1, &facePositionCallback);
