@@ -35,7 +35,6 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 #include <maze_navigator/costmap.h>
 #include <maze_navigator/visualizer.h>
 
-
 #define mp make_pair
 #define pb push_back
 
@@ -45,19 +44,30 @@ using namespace cv;
 Costmap costmap;          // maze costmap
 ExplPlanner expl_planner; // planner for autonomous exploration
 RobotPose robot_pose;     // current robot position
+MObject maze_objects;     // all detected objects in the maze
 
 bool goal_in_progress;
 
 // layer paths
-char* target_layer_path;
+char *simple_layer_path;
+char *north_south_layer_path;
+char *south_north_layer_path;
+char *east_west_layer_path;
+char *west_east_layer_path;
+
+// logic
+
+
 
 // map callbacks
 void simplemapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
+    ROS_INFO("COSTMAP SIMPLE MAP");
     costmap.storeSimple(msg_map);
 }
 void costmapCallback(const nav_msgs::OccupancyGridConstPtr &msg_map)
 {
+    ROS_INFO("COSTMAP COSTMAP REVEICEV");
     costmap.store(msg_map);
 }
 
@@ -97,7 +107,6 @@ void sendGoal(MoveBaseClient &ac, RobotPose &r_goal)
     goal_in_progress = true;
 }
 
-
 /*
     Checks state of currently executing goal.
 */
@@ -128,7 +137,7 @@ void checkGoalState(MoveBaseClient &ac)
     @returns True if success
 */
 bool updateRobotPose(tf::TransformListener &listener,
-                     ros::Time &now, tf::StampedTransform& transform)
+                     ros::Time &now, tf::StampedTransform &transform)
 {
     try
     {
@@ -147,28 +156,46 @@ bool updateRobotPose(tf::TransformListener &listener,
     return true;
 }
 
+/*
+    Reads individual layer from file and adds it.
+*/
+bool loadAndAddLayer(char *layer_path, int layer_flag)
+{
+    Mat image;
+    image = imread(layer_path, IMREAD_UNCHANGED); // Read the file
+    if (!image.data)                              // Check for invalid input
+    {
+        cout << "Could not open or find the image" << std::endl;
+        return false;
+    }
+
+    vector<vector<int>> l_mat;
+    for (int y = 0; y < image.rows; y++)
+    {
+        l_mat.pb(vector<int>());
+        for (int x = 0; x < image.cols; x++)
+        {
+            int val = image.data[(image.rows - y - 1) * image.cols + x];
+            l_mat[y].pb((val == 0 ? 1 : 0));
+        }
+    }
+    expl_planner.addLayer(l_mat, l_mat.size(), l_mat[0].size(), layer_flag);
+    return true;
+}
 
 /*
     Loads map layers - target cells, etc..
     @returns true if success
 */
-Mat loadExplPlannerLayers(){
-    Mat image;
-    image = imread(target_layer_path, IMREAD_UNCHANGED);   // Read the file
-    if(! image.data )                              // Check for invalid input
-    {
-        cout <<  "Could not open or find the image" << std::endl ;
-       // return -1;
-    }
-    
-    vector< vector<int> > l_mat;
-    for(int y = 0; y < image.rows; y++){
-        l_mat.pb(vector<int>());
-        for(int x = 0;x < image.cols;x++)
-           l_mat[y].pb(image.data[y * image.cols + x]);
-    }
-    expl_planner.addLayer(l_mat, l_mat.size(), l_mat[0].size(), LAYER_TARGET_CELL);
-    return image;
+bool loadExplPlannerLayers()
+{
+    ROS_INFO("Adding simple layer...");
+    loadAndAddLayer(simple_layer_path, LAYER_SIMPLE);
+    /*loadAndAddLayer(north_south_layer_path, LAYER_NORTH_SOUTH);
+    loadAndAddLayer(south_north_layer_path, LAYER_SOUTH_NORTH);
+    loadAndAddLayer(east_west_layer_path, LAYER_EAST_WEST);
+    loadAndAddLayer(west_east_layer_path, LAYER_WEST_EAST);*/
+    return true;
 }
 
 /*
@@ -179,27 +206,32 @@ bool plannerAndCostmapReady()
 {
     if (!expl_planner.init_)
     {
-        ROS_INFO("INITIALIZING COSTMAP");
-        if (costmap.init_){
-            loadExplPlannerLayers();
+        if (costmap.init_)
+        {
             expl_planner.init(robot_pose, costmap);
+            loadExplPlannerLayers();
         }
         else
             costmap.layerMaps();
         return false;
     }
-    else return true;    
+    else
+        return true;
 }
 
-
-bool readArgs(int argc, char** argv){
-    if( argc < 2)
+bool readArgs(int argc, char **argv)
+{
+    if (argc < 2)
     {
-        ROS_ERROR(" Usage: maze_navigator target_layer\n");
+        ROS_ERROR(" Usage: maze_navigator simple_layer_path north_south_layer_path ... \n");
         return false;
     }
 
-    target_layer_path = argv[1];
+    simple_layer_path = argv[1];
+    /*north_south_layer_path = argv[2];
+    south_north_layer_path = argv[3];
+    east_west_layer_path = argv[4];
+    west_east_layer_path = argv[5];*/
     return true;
 }
 
@@ -207,28 +239,12 @@ bool readArgs(int argc, char** argv){
     Main planning node.
 
     args1: target_layer pgm file
-
 */
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "maze_navigator");
-    if(!readArgs(argc, argv))
+    if (!readArgs(argc, argv))
         return -1;
-    
-    /*
-    Mat image = loadExplPlannerLayers();
-    namedWindow( "Display window");// Create a window for display.
-    
-    while (ros::ok())
-    {
-        imshow( "Display window", image );                   // Show our image inside it.
-
-        waitKey(30);
-        ros::spinOnce();
-        
-    }
-    return 0;
-    */
 
     // initialize handlers
     ros::NodeHandle n;
@@ -268,28 +284,37 @@ int main(int argc, char **argv)
     goal_in_progress = false;
 
     // main loop
+    ROS_INFO("Starting main loop...");
     while (ros::ok())
     {
         ros::Time now = ros::Time::now();
         if (!updateRobotPose(listener, now, transform))
+        {
+            waitKey(100);
+            ros::spinOnce();
             continue;
+        }
         if (!plannerAndCostmapReady())
+        {
+            waitKey(100);
+            ros::spinOnce();
             continue;
-        
-        ROS_INFO("PLANNER AND COSTMAP PREPARED!");
+        }
 
-        if(goal_in_progress){
+        if (goal_in_progress)
+        {
             checkGoalState(ac);
         }
         else
         {
             bool goal_found = false;
             r_goal = expl_planner.getNextGoal(robot_pose, costmap, goal_found);
-            
+
             visualizeSinglePoint(vis_pub, r_goal);
 
-            if(!goal_found){
-                continue;
+            if (!goal_found)
+            {
+                break;
             }
             sendGoal(ac, r_goal);
         }

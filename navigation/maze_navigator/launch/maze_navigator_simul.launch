@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="simple_layer" default="$(find maze_navigator)/maps/GazeboEnvironment/layers/simple_layer.pgm"/>
+    <node pkg="maze_navigator" type="maze_navigator" name="maze_navigator" args="$(arg simple_layer)" output="screen">
+    </node>
+</launch>

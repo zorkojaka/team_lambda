@@ -15,6 +15,15 @@ const int LAYER_TARGET_REACHED = 32;
 const int LAYER_VIS = 1;
 const int LAYER_PROCESSED = 64;
 
+const int LAYER_NORTH_SOUTH = 128;
+const int LAYER_SOUTH_NORTH = 256;
+const int LAYER_EAST_WEST = 512;
+const int LAYER_WEST_EAST = 1024;
+const int LAYER_SIMPLE = 2048;
+
+const int LAYER_ALL_TARGETS = LAYER_NORTH_SOUTH | LAYER_SOUTH_NORTH | 
+  LAYER_EAST_WEST | LAYER_WEST_EAST | LAYER_SIMPLE;
+
 /*
     Target cell.
 */
@@ -22,8 +31,8 @@ class TargetCell
 {
 public:
   int y_, x_;
-
-  TargetCell(int y, int x) : y_(y), x_(x) {}
+  int layer_flag_;
+  TargetCell(int y, int x, int layer_flag) : y_(y), x_(x), layer_flag_(layer_flag) {}
 
   bool isSimpleCell();
   int getId();
@@ -65,7 +74,7 @@ public:
   void addLayer(std::vector< std::vector<int> > layer_map, int height, int width, int layer_flag);
 
 private:
-  void addTargetLayer(std::vector< std::vector<int> > layer_map);
+  void addTargetLayer(std::vector< std::vector<int> > layer_map, int layer_flag);
 };
 
 #endif

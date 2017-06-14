@@ -1,8 +1,14 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="target_layer" default="$(find maze_navigator)/maps/layers/wall_layer.pgm"/>
+    <arg name="simple_layer" default="$(find maze_navigator)/maps/layers/simple_layer.pgm"/>
+    <arg name="north_south_layer" default="$(find maze_navigator)/maps/layers/north_south_layer.pgm"/>
+    <arg name="south_north_layer" default="$(find maze_navigator)/maps/layers/south_north_layer.pgm"/>
+    <arg name="east_west_layer" default="$(find maze_navigator)/maps/layers/east_west_layer.pgm"/>
+    <arg name="west_east_layer" default="$(find maze_navigator)/maps/layers/west_east_layer.pgm"/>
   
-    <node pkg="maze_navigator" type="maze_navigator" name="maze_navigator" args="$(arg target_layer)"
+
+    <node pkg="maze_navigator" type="maze_navigator" name="maze_navigator" args="$(arg simple_layer)
+    $(arg north_south_layer) $(arg south_north_layer) $(arg east_west_layer) $(arg west_east_layer)"
     output="screen">
     </node>
 

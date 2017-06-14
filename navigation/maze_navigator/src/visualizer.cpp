@@ -56,6 +56,7 @@ void visualizeLayer(const ros::Publisher &vis_pub, const Explmap &expl_map, Cost
             }
         }
     }
+   // ROS_INFO("Publishing %d point",(int)point_cloud.points.size());
     vis_pub.publish(point_cloud);
 }
 
@@ -124,8 +125,11 @@ void debug(const ros::Publisher &vis_pub,
 
 void visualizeMultipleLayers(const ros::Publisher &vis_pub, const Explmap &expl_map, Costmap& costmap)
 {
-    visualizeLayer(vis_pub, expl_map, costmap,
-        LAYER_TARGET_CELL, createPointCloud(0,1.0,0.0,0.0));  
+    //visualizeLayer(vis_pub, expl_map, costmap,
+    //    LAYER_ROBOT_REACHABLE, createPointCloud(0,1.0,0.0,0.0));  
+    
+   // visualizeLayer(vis_pub, expl_map, costmap,
+   //     LAYER_TARGET_CELL, createPointCloud(0,1.0,0.0,0.0));  
     visualizeLayer(vis_pub, expl_map, costmap,
         LAYER_TARGET_REACHED, createPointCloud(1,0.0,1.0,0.0));
 }

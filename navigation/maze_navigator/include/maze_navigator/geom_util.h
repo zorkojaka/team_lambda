@@ -19,4 +19,13 @@ tf::Quaternion constructRotation(double angle_2d){
     return rot_quat_;
 }
 
+/*
+    Rotation vector to rotation angle.
+    @returns Angle in radians.
+*/
+double rotVecToAngle(tf::Vector3 rot_vec){
+    tf::Vector3 y_axis(0,1,0);
+    return 0.0;
+}
+
 #endif

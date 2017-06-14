@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <maze_navigator/geom_util.h>
 #include <maze_navigator/robot_pose.h>
 #include <maze_navigator/expl_planner.h>
 
@@ -9,6 +10,30 @@
 #define pb push_back
 
 using namespace std;
+
+/*
+    Take cell visibility conditions into account.
+    @returns true if cell is visible from r_pos
+*/
+bool ExplPlanner::detCellCondVis(const RobotPose &r_pos, Costmap &costmap, TargetCell &t_cell)
+{
+    if (t_cell.layer_flag_ == LAYER_SIMPLE)
+        return true;
+
+    double wx, wy;
+    costmap.fromPixel(t_cell.y_, t_cell.x_, wy, wx);
+
+    tf::Vector3 vis_vec(wx - r_pos.wx_, wy - r_pos.wy_, 0);
+    if (t_cell.layer_flag_ == LAYER_NORTH_SOUTH)
+        return (vis_vec.y() < 0) && (abs(vis_vec.x()) < CHG_THRESH_IN_WORLD);
+    else if (t_cell.layer_flag_ == LAYER_SOUTH_NORTH)
+        return (vis_vec.y() > 0) && (abs(vis_vec.x()) < CHG_THRESH_IN_WORLD);
+    else if (t_cell.layer_flag_ == LAYER_EAST_WEST)
+        return (vis_vec.x() < 0) && (abs(vis_vec.y()) < CHG_THRESH_IN_WORLD);
+    else if (t_cell.layer_flag_ == LAYER_WEST_EAST)
+        return (vis_vec.x() > 0) && (abs(vis_vec.y()) < CHG_THRESH_IN_WORLD);
+    return false;
+}
 
 vector<TargetCell> ExplPlanner::getVisibleTargetCells(const RobotPose &r_pos, Costmap &costmap)
 {
@@ -33,7 +58,7 @@ vector<TargetCell> ExplPlanner::getVisibleTargetCells(const RobotPose &r_pos, Co
             {
                 TargetCell t_cell = expl_map_.getTargetCell(py, px);
 
-                if (t_cell.isSimpleCell()) // cell is visible
+                if (detCellCondVis(r_pos, costmap, t_cell)) // cell is visible
                 {
                     if (pts_unique.find(t_cell.getId()) == pts_unique.end())
                     {
@@ -50,13 +75,13 @@ vector<TargetCell> ExplPlanner::getVisibleTargetCells(const RobotPose &r_pos, Co
 // initialization
 void ExplPlanner::init(const RobotPose &r_pos, Costmap &costmap)
 {
+    expl_map_ = Explmap(costmap.height_, costmap.width_);
     constructExplorationMap(r_pos, costmap);
     // constructPlan(costmap);
-    expl_map_ = Explmap(costmap.height_, costmap.width_);
     init_ = true;
 }
 
-void ExplPlanner::addLayer(std::vector<std::vector<int> > layer_map, int height, int width,
+void ExplPlanner::addLayer(std::vector<std::vector<int>> layer_map, int height, int width,
                            int layer_flag)
 {
     expl_map_.addLayer(layer_map, height, width, layer_flag);
@@ -69,8 +94,9 @@ void ExplPlanner::constructExplorationMap(const RobotPose &r_pos, Costmap &costm
     // constructLayer(r_pos, COND_REACHABLE); // floodfill conditionali reachable
 }
 
-void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap& costmap, int layer_flag)
+void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap &costmap, int layer_flag)
 {
+    ROS_INFO("Constructing layer %d", layer_flag);
     dq_.clear();
 
     dq_.pb(mp(r_pos.y_, r_pos.x_));
@@ -89,6 +115,7 @@ void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap& costmap, int l
         //    continue;
         if (expl_map_.getLabel(y, x) & layer_flag)
             continue;
+
         expl_map_.setLabel(y, x, expl_map_.getLabel(y, x) | layer_flag);
 
         // 8 - connect
@@ -104,18 +131,19 @@ void ExplPlanner::constructLayer(const RobotPose &r_pos, Costmap& costmap, int l
 
                 if (layer_flag == LAYER_ROBOT_REACHABLE && !costmap.isFree(ay, ax))
                     continue;
-                if (layer_flag == LAYER_ROBOT_REACHABLE && costmap.isObstacle(ay, ax))
+                //                if (layer_flag == LAYER_ROBOT_REACHABLE && costmap.isObstacle(ay, ax))
+                //                    continue;
+                if (expl_map_.getLabel(ay, ax) & layer_flag)
                     continue;
-                if (expl_map_.getLabel(y, x) & layer_flag)
-                    continue;
-
                 dq_.pb(mp(ay, ax));
             }
         }
     }
 }
 
-// map enrichment
+/*
+    @returns New exploration goal.
+*/
 RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
                                    Costmap &costmap, bool &goal_found)
 {
@@ -149,9 +177,13 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
 
         double angle_step = (2 * M_PI) / ROBOT_ANGLE_GRANULARITY;
         double full_circle = 2 * M_PI;
-        for (double angle = 0.0; angle < full_circle; angle += angle_step)
+        int angle_it = 0;
+        for (double angle = 0.0; angle < full_circle; angle += angle_step, angle_it++)
         {
             tf::Vector3 curr_rot = y_axis_.rotate(z_axis_, angle);
+
+            if (expl_used_goals_[y][x][angle_it]) // avoid reusing same goal twice
+                continue;
 
             vector<TargetCell> t_cells_visible = getVisibleTargetCells(
                 RobotPose(y, x, curr_rot, costmap), costmap);
@@ -167,6 +199,7 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
             if (t_cells_new.size() > 0)
             {
                 goal_found = true;
+                expl_used_goals_[y][x][angle_it] = true; // potential place for mistakes
                 r_goal = RobotPose(y, x, curr_rot, angle, costmap);
                 break;
             }
@@ -200,6 +233,74 @@ RobotPose ExplPlanner::getNextGoal(const RobotPose &r_pos,
 
     goal_found = false;
     ROS_WARN("Planner: NO GOAL FOUND\n");
+    return r_pos;
+}
+
+/*
+    Get object approach goal.
+*/
+RobotPose getApproachGoal(const RobotPose &r_pos, const RobotPose &goal_cell,
+                          Costmap &costmap, bool &goal_found)
+{
+    RobotPose r_goal;
+    dq_.clear();
+
+    expl_map_.clearVisited();
+
+    int startY = goal_cell.y_;
+    int startX = goal_cell.x_;
+
+    /*
+        Find closest ROBOT_REACHABLE cell and right orientation vector.
+    */
+    dq_.pb(mp(goal_cell.y_, goal_cell.x_));
+    while (!dq_.empty())
+    {
+        pair<int, int> top = dq_.front();
+        dq_.pop_front();
+
+        int y = top.first;
+        int x = top.second;
+
+        if (expl_map_.isRobotReachable(y, x))
+        {
+            // goal found
+            double wy, wx;
+            costmap.fromPixel(y, x, wy, wx);
+
+            tf::Vector3 rot_vec(goal_cell.wx_ - wx, goal_cell.wy_ - wy, 0);
+            double angle_2d = rotVecToAngle(rot_vec);
+
+            r_goal = RobotPose(y, x, rot_vec, angle_2d, costmap);
+
+            dq_.clear();
+            goal_found = true;
+            return r_goal;
+        }
+
+        if (expl_map_.isVisited(y, x))
+            continue;
+        expl_map_.markVisited(y, x);
+
+        // 8 - connect
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                int ay = y + dy;
+                int ax = x + dx;
+
+                if (!costmap.inBounds(ay, ax))
+                    continue;
+                if (expl_map_.isVisited(ay, ax))
+                    continue;
+                dq_.pb(mp(ay, ax));
+            }
+        }
+    }
+
+    goal_found = false;
+    ROS_WARN("Planner: NO APPROACH GOAL FOUND\n");
     return r_pos;
 }
 

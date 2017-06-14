@@ -62,9 +62,10 @@ TargetCell Explmap::getTargetCell(int y,int x){
 
 void Explmap::addLayer(std::vector< std::vector<int> > layer_map, int height, int width, int layer_flag)
 {
-    if (layer_flag == LAYER_TARGET_CELL)
+    ROS_INFO("Layering [%d,%d] vs [%d,%d]", height_, width_, height, width);
+    if (layer_flag & LAYER_ALL_TARGETS)
     {
-        addTargetLayer(layer_map);
+        addTargetLayer(layer_map, layer_flag);
         return;
     }
 
@@ -78,10 +79,9 @@ void Explmap::addLayer(std::vector< std::vector<int> > layer_map, int height, in
         }
 }
 
-void Explmap::addTargetLayer(std::vector< std::vector<int> > layer_map)
+void Explmap::addTargetLayer(std::vector< std::vector<int> > layer_map, int layer_flag)
 {
-    t_cells_.clear();
-    int t_cell_idx = 0;
+    int t_cell_idx = t_cells_.size();
     for (int y = 0; y < height_; y++)
         for (int x = 0; x < width_; x++)
         {
@@ -90,11 +90,9 @@ void Explmap::addTargetLayer(std::vector< std::vector<int> > layer_map)
                 aux_map_[y][x] |= LAYER_TARGET_CELL;
                 cell_idx_[y][x] = t_cell_idx;
 
-                t_cells_.push_back(TargetCell(y, x));
-
+                t_cells_.push_back(TargetCell(y, x, layer_flag));
                 t_cell_idx++;
             }
-            else if (aux_map_[y][x] & LAYER_TARGET_CELL)
-                aux_map_[y][x] ^= LAYER_TARGET_CELL;
         }
+    ROS_INFO("And we have %d target cells", t_cell_idx);
 }
