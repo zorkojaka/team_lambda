@@ -9,6 +9,13 @@ RobotPose::RobotPose(int py_, int px_, Costmap &costmap)
     costmap.fromPixel(y_, x_, wy_, wx_);
 }
 
+RobotPose::RobotPose(double wy_, double wx_, Costmap &costmap): wx_(wx_), wy_(wy_), wz_(0)
+{
+    init_ = true;
+    costmap.fromWorld(wy_, wx_, y_, x_);
+}
+    
+
 RobotPose::RobotPose(int py_, int px_, tf::Vector3 rotvec, Costmap &costmap)
 {
     init_ = true;

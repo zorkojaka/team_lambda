@@ -1,6 +1,6 @@
 <launch>
   <include file="$(find dlib_detector)/launch/face_detector.launch">
-	<arg name="image_topic" value="/camera/rgb/image_raw" />
+	  <!-- <arg name="image_topic" value="/camera/rgb/image_raw" /> -->
     <arg name="detections_topic" value="/facedetector/faces" />
   </include>
 

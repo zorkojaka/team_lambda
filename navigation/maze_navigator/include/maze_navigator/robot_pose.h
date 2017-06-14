@@ -21,6 +21,8 @@ class RobotPose
     RobotPose(int py_, int px_, Costmap &costmap);
     RobotPose(int py_, int px_, tf::Vector3 rotvec, Costmap &costmap);
     RobotPose(int py_, int px_, tf::Vector3 rotvec, double angle_2d, Costmap &costmap);
+    RobotPose(double wy_, double wx_, Costmap &costmap);
+    
 
     void update(tf::StampedTransform &transform, Costmap &costmap);
 };
